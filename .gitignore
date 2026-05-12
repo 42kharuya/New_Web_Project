@@ -6,6 +6,9 @@
 !.vscode/settings.json
 !.vscode/extensions.json
 
+# Claude Code
+.claude/settings.local.json
+
 # Logs
 *.log
 
@@ -21,6 +24,7 @@ pnpm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+next-env.d.ts
 
 # Env
 .env
