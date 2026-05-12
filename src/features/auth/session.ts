@@ -84,3 +84,9 @@ export function sessionCookieOptions(token: string) {
     maxAge: 60 * 60 * 24 * SESSION_DURATION_DAYS,
   };
 }
+
+/** セッション Cookie を削除する */
+export async function clearSession(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(SESSION_COOKIE);
+}
