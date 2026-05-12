@@ -1,0 +1,285 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { KIND_LABEL } from "@/features/deadlines/format";
+
+type FieldErrors = Record<string, string>;
+
+type Status = "idle" | "submitting" | "error";
+
+const KIND_OPTIONS = Object.entries(KIND_LABEL) as [string, string][];
+
+type Props = {
+  id: string;
+  initialCompanyName: string;
+  initialKind: string;
+  initialDeadlineAt: string;
+  initialLink: string;
+  initialMemo: string;
+};
+
+export default function DeadlineEditForm({
+  id,
+  initialCompanyName,
+  initialKind,
+  initialDeadlineAt,
+  initialLink,
+  initialMemo,
+}: Props) {
+  const router = useRouter();
+
+  const [companyName, setCompanyName] = useState(initialCompanyName);
+  const [kind, setKind] = useState(initialKind);
+  const [deadlineAt, setDeadlineAt] = useState(initialDeadlineAt);
+  const [link, setLink] = useState(initialLink);
+  const [memo, setMemo] = useState(initialMemo);
+
+  const [status, setStatus] = useState<Status>("idle");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [globalError, setGlobalError] = useState("");
+
+  function validate(): FieldErrors {
+    const errs: FieldErrors = {};
+    if (!companyName.trim()) errs.company_name = "企業名は必須です";
+    if (!kind) errs.kind = "種別は必須です";
+    if (!deadlineAt) errs.deadline_at = "締切日時は必須です";
+    return errs;
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setGlobalError("");
+
+    const clientErrors = validate();
+    if (Object.keys(clientErrors).length > 0) {
+      setFieldErrors(clientErrors);
+      setStatus("error");
+      return;
+    }
+    setFieldErrors({});
+
+    setStatus("submitting");
+
+    try {
+      const res = await fetch(`/api/deadlines/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company_name: companyName.trim(),
+          kind,
+          deadline_at: deadlineAt ? deadlineAt + "+09:00" : "",
+          link: link.trim() || undefined,
+          memo: memo.trim() || undefined,
+        }),
+      });
+
+      if (res.ok) {
+        router.push("/dashboard");
+        return;
+      }
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 400 && Array.isArray(data.details)) {
+        const errs: FieldErrors = {};
+        for (const e of data.details as { field: string; message: string }[]) {
+          errs[e.field] = e.message;
+        }
+        setFieldErrors(errs);
+        setStatus("error");
+      } else if (res.status === 403) {
+        setGlobalError(data.error ?? "この操作は許可されていません。");
+        setStatus("error");
+      } else if (res.status === 404) {
+        setGlobalError("締切アイテムが見つかりません。");
+        setStatus("error");
+      } else {
+        setGlobalError(data.error ?? "保存に失敗しました。もう一度お試しください。");
+        setStatus("error");
+      }
+    } catch {
+      setGlobalError("ネットワークエラーが発生しました。");
+      setStatus("error");
+    }
+  }
+
+  const isSubmitting = status === "submitting";
+
+  return (
+    <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-6">
+      {globalError && (
+        <p
+          role="alert"
+          className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700"
+        >
+          {globalError}
+        </p>
+      )}
+
+      <div>
+        <label
+          htmlFor="company_name"
+          className="block text-sm font-medium text-slate-700"
+        >
+          企業名
+          <span className="ml-1 text-red-500">*</span>
+        </label>
+        <input
+          id="company_name"
+          type="text"
+          value={companyName}
+          onChange={(e) => setCompanyName(e.target.value)}
+          placeholder="例: 株式会社テクノロジー"
+          maxLength={100}
+          disabled={isSubmitting}
+          className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+            fieldErrors.company_name
+              ? "border-red-400 bg-red-50"
+              : "border-slate-300 bg-white"
+          }`}
+        />
+        {fieldErrors.company_name && (
+          <p className="mt-1 text-xs text-red-600" role="alert">
+            {fieldErrors.company_name}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <label
+          htmlFor="kind"
+          className="block text-sm font-medium text-slate-700"
+        >
+          種別
+          <span className="ml-1 text-red-500">*</span>
+        </label>
+        <select
+          id="kind"
+          value={kind}
+          onChange={(e) => setKind(e.target.value)}
+          disabled={isSubmitting}
+          className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+            fieldErrors.kind
+              ? "border-red-400 bg-red-50"
+              : "border-slate-300 bg-white"
+          }`}
+        >
+          <option value="">選択してください</option>
+          {KIND_OPTIONS.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+        {fieldErrors.kind && (
+          <p className="mt-1 text-xs text-red-600" role="alert">
+            {fieldErrors.kind}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <label
+          htmlFor="deadline_at"
+          className="block text-sm font-medium text-slate-700"
+        >
+          締切日時
+          <span className="ml-1 text-red-500">*</span>
+        </label>
+        <input
+          id="deadline_at"
+          type="datetime-local"
+          value={deadlineAt}
+          onChange={(e) => setDeadlineAt(e.target.value)}
+          disabled={isSubmitting}
+          className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+            fieldErrors.deadline_at
+              ? "border-red-400 bg-red-50"
+              : "border-slate-300 bg-white"
+          }`}
+        />
+        {fieldErrors.deadline_at && (
+          <p className="mt-1 text-xs text-red-600" role="alert">
+            {fieldErrors.deadline_at}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <label
+          htmlFor="link"
+          className="block text-sm font-medium text-slate-700"
+        >
+          リンク
+          <span className="ml-1 text-xs text-slate-400">（任意）</span>
+        </label>
+        <input
+          id="link"
+          type="url"
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+          placeholder="https://example.com/job"
+          maxLength={2048}
+          disabled={isSubmitting}
+          className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+            fieldErrors.link
+              ? "border-red-400 bg-red-50"
+              : "border-slate-300 bg-white"
+          }`}
+        />
+        {fieldErrors.link && (
+          <p className="mt-1 text-xs text-red-600" role="alert">
+            {fieldErrors.link}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <label
+          htmlFor="memo"
+          className="block text-sm font-medium text-slate-700"
+        >
+          メモ
+          <span className="ml-1 text-xs text-slate-400">（任意）</span>
+        </label>
+        <textarea
+          id="memo"
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
+          placeholder="選考メモ・注意事項など"
+          maxLength={1000}
+          rows={3}
+          disabled={isSubmitting}
+          className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+            fieldErrors.memo
+              ? "border-red-400 bg-red-50"
+              : "border-slate-300 bg-white"
+          }`}
+        />
+        {fieldErrors.memo && (
+          <p className="mt-1 text-xs text-red-600" role="alert">
+            {fieldErrors.memo}
+          </p>
+        )}
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isSubmitting ? "保存中..." : "保存する"}
+        </button>
+        <Link
+          href="/dashboard"
+          className="text-sm text-slate-500 underline hover:text-slate-700"
+        >
+          キャンセル
+        </Link>
+      </div>
+    </form>
+  );
+}

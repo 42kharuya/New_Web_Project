@@ -174,7 +174,7 @@ export default function DeadlineList({ initialItems }: Props) {
                   )}
                 </div>
 
-                {/* 右列：ステータスセレクト（1操作で即更新）＋削除ボタン */}
+                {/* 右列：ステータスセレクト（1操作で即更新）＋編集リンク＋削除ボタン */}
                 <div className="flex shrink-0 items-center gap-2">
                 <select
                   value={item.status}
@@ -189,6 +189,15 @@ export default function DeadlineList({ initialItems }: Props) {
                     </option>
                   ))}
                 </select>
+                <Link
+                  href={`/deadline/${item.id}/edit`}
+                  aria-label={`${item.companyName}を編集`}
+                  className={`rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 ${isUpdating || isDeleting ? "pointer-events-none opacity-50" : ""}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H7v-3a2 2 0 01.586-1.414z" />
+                  </svg>
+                </Link>
                 <button
                   onClick={() => handleDelete(item.id, item.companyName)}
                   disabled={isUpdating || isDeleting}
