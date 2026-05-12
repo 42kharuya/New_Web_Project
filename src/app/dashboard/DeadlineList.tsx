@@ -35,16 +35,19 @@ export default function DeadlineList({ initialItems }: Props) {
   const [items, setItems] = useState<DeadlineItem[]>(initialItems);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  async function handleDelete(id: string, companyName: string) {
-    if (!window.confirm(`「${companyName}」の締切を削除しますか？`)) return;
+  function handleDelete(id: string) {
+    setConfirmDeleteId(id);
+  }
 
+  async function executeDelete(id: string) {
     const prevItems = items;
+    setConfirmDeleteId(null);
     setDeletingId(id);
     setErrorMsg(null);
 
-    // 楽観的更新
     setItems((prev) => prev.filter((item) => item.id !== id));
 
     try {
@@ -55,7 +58,7 @@ export default function DeadlineList({ initialItems }: Props) {
         throw new Error(data.error ?? "削除に失敗しました");
       }
     } catch (err) {
-      setItems(prevItems); // ロールバック
+      setItems(prevItems);
       setErrorMsg(
         err instanceof Error ? err.message : "削除に失敗しました",
       );
@@ -138,11 +141,12 @@ export default function DeadlineList({ initialItems }: Props) {
           const urgency = getUrgencyLevel(item.deadlineAt);
           const isUpdating = updatingId === item.id;
           const isDeleting = deletingId === item.id;
+          const isConfirming = confirmDeleteId === item.id;
 
           return (
             <li
               key={item.id}
-              className={`rounded-lg px-4 py-3 shadow-sm transition-opacity ${URGENCY_CLASS[urgency]} ${isUpdating || isDeleting ? "opacity-60" : ""}`}
+              className={`rounded-lg px-4 py-3 shadow-sm transition-opacity ${URGENCY_CLASS[urgency]} ${isUpdating || isDeleting ? "opacity-60" : ""} ${isConfirming ? "ring-1 ring-red-300" : ""}`}
             >
               <div className="flex items-start justify-between gap-3">
                 {/* 左列：企業名・種別・日時・リンク・メモ */}
@@ -198,20 +202,38 @@ export default function DeadlineList({ initialItems }: Props) {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H7v-3a2 2 0 01.586-1.414z" />
                   </svg>
                 </Link>
-                <button
-                  onClick={() => handleDelete(item.id, item.companyName)}
-                  disabled={isUpdating || isDeleting}
-                  aria-label={`${item.companyName}を削除`}
-                  className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isDeleting ? (
-                    <span className="text-xs">削除中…</span>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a1 1 0 00-1-1h-4a1 1 0 00-1 1H5" />
-                    </svg>
-                  )}
-                </button>
+                {isConfirming ? (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-slate-600">削除しますか？</span>
+                    <button
+                      onClick={() => executeDelete(item.id)}
+                      className="rounded px-2 py-0.5 text-xs font-medium text-white bg-red-500 hover:bg-red-600"
+                    >
+                      削除
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteId(null)}
+                      className="rounded px-2 py-0.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    disabled={isUpdating || isDeleting}
+                    aria-label={`${item.companyName}を削除`}
+                    className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isDeleting ? (
+                      <span className="text-xs">削除中…</span>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a1 1 0 00-1-1h-4a1 1 0 00-1 1H5" />
+                      </svg>
+                    )}
+                  </button>
+                )}
                 </div>
               </div>
             </li>
