@@ -2,10 +2,5 @@
   "files.eol": "\n",
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
-  "editor.formatOnSave": true,
-  "github.copilot.chat.commitMessageGeneration.instructions": [
-    {
-      "file": ".github/skills/commit/SKILL.md"
-    }
-  ]
+  "editor.formatOnSave": true
 }
