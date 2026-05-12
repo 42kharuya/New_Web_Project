@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GtmScript } from "./_components/GtmScript";
+import { AppHeader } from "./_components/AppHeader";
+import { getSession } from "@/features/auth/session";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,14 +13,17 @@ export const metadata: Metadata = {
   ),
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const session = await getSession();
+
   return (
     <html lang="ja">
       <body className="flex min-h-screen flex-col">
         {/* GTM スクリプト: body 先頭に配置（noscript フォールバック含む） */}
         <GtmScript />
+        {session && <AppHeader email={session.email} />}
         <div className="flex-1">{children}</div>
         <footer className="border-t border-slate-200 bg-slate-50 py-4 text-center text-xs text-slate-500">
           <nav className="space-x-4">
