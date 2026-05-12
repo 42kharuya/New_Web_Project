@@ -8,6 +8,7 @@ import {
   URGENCY_CLASS,
   KIND_LABEL,
   STATUS_LABEL,
+  STATUS_COLOR,
 } from "@/features/deadlines/format";
 
 export type DeadlineItem = {
@@ -36,6 +37,7 @@ export default function DeadlineList({ initialItems }: Props) {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   function handleDelete(id: string) {
@@ -178,21 +180,37 @@ export default function DeadlineList({ initialItems }: Props) {
                   )}
                 </div>
 
-                {/* 右列：ステータスセレクト（1操作で即更新）＋編集リンク＋削除ボタン */}
+                {/* 右列：ステータス＋編集リンク＋削除ボタン */}
                 <div className="flex shrink-0 items-center gap-2">
-                <select
-                  value={item.status}
-                  disabled={isUpdating || isDeleting}
-                  onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                  aria-label={`${item.companyName}のステータスを変更`}
-                  className="cursor-pointer rounded border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {Object.entries(STATUS_LABEL).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                {editingStatusId === item.id ? (
+                  <select
+                    value={item.status}
+                    autoFocus
+                    disabled={isUpdating || isDeleting}
+                    onChange={(e) => {
+                      handleStatusChange(item.id, e.target.value);
+                      setEditingStatusId(null);
+                    }}
+                    onBlur={() => setEditingStatusId(null)}
+                    aria-label={`${item.companyName}のステータスを変更`}
+                    className="cursor-pointer rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {Object.entries(STATUS_LABEL).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <button
+                    onClick={() => setEditingStatusId(item.id)}
+                    disabled={isUpdating || isDeleting}
+                    aria-label={`${item.companyName}のステータスを変更`}
+                    className={`rounded px-2 py-1 text-xs font-medium ${STATUS_COLOR[item.status]} disabled:cursor-not-allowed disabled:opacity-50`}
+                  >
+                    {STATUS_LABEL[item.status]}
+                  </button>
+                )}
                 <Link
                   href={`/deadline/${item.id}/edit`}
                   aria-label={`${item.companyName}を編集`}

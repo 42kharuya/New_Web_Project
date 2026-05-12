@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import DeadlineList, { type DeadlineItem } from "./DeadlineList";
 import { FREE_ITEM_LIMIT, isProUser } from "@/features/deadlines/gate";
 import { trackEvent } from "@/features/analytics";
+import { getUrgencyLevel } from "@/features/deadlines/format";
 
 /**
  * /dashboard – Server Component
@@ -50,6 +51,11 @@ export default async function DashboardPage() {
   // Free ユーザーが上限に達しているか
   const isAtFreeLimit = !pro && items.length >= FREE_ITEM_LIMIT;
 
+  const todoCount = items.filter((i) => i.status === "todo").length;
+  const overdueCount = items.filter(
+    (i) => i.status === "todo" && getUrgencyLevel(i.deadlineAt) === "overdue",
+  ).length;
+
   return (
     <main className="mx-auto max-w-3xl p-6">
       {/* ヘッダー */}
@@ -62,6 +68,36 @@ export default async function DashboardPage() {
           + 締切を追加
         </Link>
       </div>
+
+      {/* 件数サマリー */}
+      {items.length > 0 && (
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-center">
+            <p className="text-2xl font-bold text-slate-900">{items.length}</p>
+            <p className="mt-0.5 text-xs text-slate-500">登録中</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-center">
+            <p className="text-2xl font-bold text-slate-900">{todoCount}</p>
+            <p className="mt-0.5 text-xs text-slate-500">未対応</p>
+          </div>
+          <div
+            className={`rounded-lg border px-4 py-3 text-center ${
+              overdueCount > 0
+                ? "border-red-200 bg-red-50"
+                : "border-slate-200 bg-white"
+            }`}
+          >
+            <p
+              className={`text-2xl font-bold ${
+                overdueCount > 0 ? "text-red-600" : "text-slate-900"
+              }`}
+            >
+              {overdueCount}
+            </p>
+            <p className="mt-0.5 text-xs text-slate-500">期限切れ</p>
+          </div>
+        </div>
+      )}
 
       {/* Free 枠上限バナー */}
       {isAtFreeLimit && (
