@@ -248,8 +248,11 @@ export default function DeadlineList({ initialItems }: Props) {
                     {/* UrgencyRing */}
                     <UrgencyRing iso={item.deadlineAt} urgency={urgency} />
 
-                    {/* メイン情報 */}
-                    <div className="min-w-0 flex-1">
+                    {/* メイン情報 → 詳細ページへのリンク */}
+                    <Link
+                      href={`/deadline/${item.id}`}
+                      className="min-w-0 flex-1"
+                    >
                       <p
                         className={`truncate font-semibold text-[var(--ink)] ${
                           isDone ? "line-through" : ""
@@ -265,22 +268,12 @@ export default function DeadlineList({ initialItems }: Props) {
                         </span>
                         <span>{formatDeadline(item.deadlineAt)}</span>
                       </p>
-                      {item.link && (
-                        <a
-                          href={item.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-0.5 inline-block max-w-xs truncate text-xs text-brand underline"
-                        >
-                          公募リンク ↗
-                        </a>
-                      )}
                       {item.memo && (
                         <p className="mt-1 line-clamp-1 text-xs text-[var(--ink-4)]">
                           {item.memo}
                         </p>
                       )}
-                    </div>
+                    </Link>
 
                     {/* 右列: ステータスピル + 操作 */}
                     <div className="flex shrink-0 flex-col items-end gap-2">
