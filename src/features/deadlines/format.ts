@@ -53,9 +53,9 @@ export function getUrgencyLevel(
 
 export const URGENCY_CLASS: Record<UrgencyLevel, string> = {
   overdue: "border-l-4 border-red-500 bg-red-50",
-  today: "border-l-4 border-red-400 bg-red-50",
+  today: "border-l-4 border-orange-400 bg-orange-50",
   soon: "border-l-4 border-yellow-400 bg-yellow-50",
-  normal: "border-l-4 border-slate-200 bg-white",
+  normal: "border-l-4 border-indigo-200 bg-white",
 };
 
 export const KIND_LABEL: Record<string, string> = {
@@ -74,7 +74,7 @@ export const STATUS_LABEL: Record<string, string> = {
 
 export const STATUS_COLOR: Record<string, string> = {
   todo: "bg-slate-100 text-slate-600",
-  submitted: "bg-blue-100 text-blue-700",
+  submitted: "bg-indigo-100 text-indigo-700",
   done: "bg-green-100 text-green-700",
   canceled: "bg-slate-100 text-slate-400",
 };
