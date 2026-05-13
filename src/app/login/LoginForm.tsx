@@ -78,20 +78,28 @@ export default function LoginForm() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-slate-700"
+              className="block text-sm font-medium text-[var(--ink-2)]"
             >
               メールアドレス
             </label>
-            <input
-              id="email"
-              type="email"
-              required
-              autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
-            />
+            <div className="relative mt-1">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[var(--ink-3)]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect width="20" height="16" x="2" y="4" rx="2" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                </svg>
+              </span>
+              <input
+                id="email"
+                type="email"
+                required
+                autoFocus
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="block w-full rounded-lg border border-[var(--rule)] bg-white pl-9 pr-3 py-3 text-sm text-[var(--ink)] placeholder:text-[var(--ink-4)] outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              />
+            </div>
           </div>
 
           {status === "error" && (
@@ -103,7 +111,7 @@ export default function LoginForm() {
           <button
             type="submit"
             disabled={status === "loading"}
-            className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+            className="w-full rounded-lg bg-[var(--ink)] px-4 py-3 text-sm font-semibold text-white hover:bg-brand transition-colors disabled:opacity-60"
           >
             {status === "loading" ? "送信中…" : "マジックリンクを送信"}
           </button>
