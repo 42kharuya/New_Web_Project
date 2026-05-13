@@ -10,8 +10,6 @@ import { scaleIn } from "@/lib/motion";
 type FieldErrors = Record<string, string>;
 type Status = "idle" | "submitting" | "error" | "limit_exceeded";
 
-const KIND_OPTIONS = Object.entries(KIND_LABEL) as [string, string][];
-
 type CreateProps = { mode: "create" };
 type EditProps = {
   mode: "edit";
@@ -24,6 +22,56 @@ type EditProps = {
 };
 
 type Props = CreateProps | EditProps;
+
+const KIND_TILES = [
+  { value: "es", label: "ES", icon: "📝", desc: "エントリーシート" },
+  { value: "briefing", label: "説明会", icon: "📅", desc: "イベント・会社説明会" },
+  { value: "interview", label: "面接", icon: "🗣️", desc: "面接・選考" },
+  { value: "other", label: "その他", icon: "📌", desc: "その他の選考" },
+] as const;
+
+const QUICK_TIMES = [
+  {
+    label: "今夜",
+    getDate() {
+      const d = new Date();
+      d.setHours(23, 59, 0, 0);
+      return d;
+    },
+  },
+  {
+    label: "明日",
+    getDate() {
+      const d = new Date();
+      d.setDate(d.getDate() + 1);
+      d.setHours(23, 59, 0, 0);
+      return d;
+    },
+  },
+  {
+    label: "3日後",
+    getDate() {
+      const d = new Date();
+      d.setDate(d.getDate() + 3);
+      d.setHours(23, 59, 0, 0);
+      return d;
+    },
+  },
+  {
+    label: "1週間後",
+    getDate() {
+      const d = new Date();
+      d.setDate(d.getDate() + 7);
+      d.setHours(23, 59, 0, 0);
+      return d;
+    },
+  },
+] as const;
+
+function toDatetimeLocal(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 
 export default function DeadlineForm(props: Props) {
   const router = useRouter();
@@ -81,7 +129,6 @@ export default function DeadlineForm(props: Props) {
         body: JSON.stringify({
           company_name: companyName.trim(),
           kind,
-          // datetime-local は TZ なしで返るため +09:00 を付与して JST を明示する
           deadline_at: deadlineAt ? deadlineAt + "+09:00" : "",
           link: link.trim() || undefined,
           memo: memo.trim() || undefined,
@@ -115,7 +162,9 @@ export default function DeadlineForm(props: Props) {
         setGlobalError(data.error ?? "この操作は許可されていません。");
         setStatus("error");
       } else {
-        setGlobalError(data.error ?? "保存に失敗しました。もう一度お試しください。");
+        setGlobalError(
+          data.error ?? "保存に失敗しました。もう一度お試しください。",
+        );
         setStatus("error");
       }
     } catch {
@@ -128,32 +177,33 @@ export default function DeadlineForm(props: Props) {
   const isLimitExceeded = status === "limit_exceeded";
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-5">
-      {/* Free 枠上限エラー（create モードのみ） */}
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+      {/* Free 枠上限エラー */}
       {isLimitExceeded && (
         <div
           role="alert"
-          className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+          className="rounded-[var(--radius-card)] border border-[var(--u-soon-bg)] bg-[var(--u-soon-bg)] px-4 py-3 text-sm text-[var(--u-soon)]"
         >
-          <p className="font-semibold">Free プランの登録上限（10件）に達しました</p>
+          <p className="font-semibold">
+            Free プランの登録上限（10件）に達しました
+          </p>
           <p className="mt-1">
-            Pro にアップグレードすると締切アイテムが{" "}
-            <strong>無制限</strong>になります。
+            Pro にアップグレードすると締切アイテムが<strong>無制限</strong>
+            になります。
           </p>
           <Link
             href="/billing"
-            className="mt-2 inline-block rounded-md bg-amber-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
+            className="mt-2 inline-block rounded-xl bg-[var(--u-soon)] px-4 py-1.5 text-sm font-semibold text-white hover:opacity-90"
           >
             Pro にアップグレード →
           </Link>
         </div>
       )}
 
-      {/* グローバルエラー */}
       {globalError && (
         <p
           role="alert"
-          className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700"
+          className="rounded-xl bg-[var(--u-overdue-bg)] px-4 py-2 text-sm text-[var(--u-overdue)]"
         >
           {globalError}
         </p>
@@ -163,10 +213,10 @@ export default function DeadlineForm(props: Props) {
       <div>
         <label
           htmlFor="company_name"
-          className="block text-sm font-medium text-slate-700"
+          className="block text-sm font-semibold text-[var(--ink-2)]"
         >
           企業名
-          <span className="ml-1 text-red-500">*</span>
+          <span className="ml-1 text-[var(--u-overdue)]">*</span>
         </label>
         <input
           id="company_name"
@@ -176,65 +226,78 @@ export default function DeadlineForm(props: Props) {
           placeholder="例: 株式会社テクノロジー"
           maxLength={100}
           disabled={isSubmitting}
-          className={`mt-1 w-full rounded-lg border px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 ${
+          className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-50 ${
             fieldErrors.company_name
-              ? "border-red-400 bg-red-50"
-              : "border-slate-300 bg-white"
+              ? "border-[var(--u-overdue)] bg-[var(--u-overdue-bg)]"
+              : "border-[var(--rule)] bg-[var(--card)]"
           }`}
         />
         <AnimatePresence>
           {fieldErrors.company_name && (
-            <motion.p {...scaleIn} role="alert" className="mt-1 text-xs text-red-600">
+            <motion.p
+              {...scaleIn}
+              role="alert"
+              className="mt-1 text-xs text-[var(--u-overdue)]"
+            >
               {fieldErrors.company_name}
             </motion.p>
           )}
         </AnimatePresence>
       </div>
 
-      {/* 種別 */}
+      {/* 種別タイル */}
       <div>
-        <label
-          htmlFor="kind"
-          className="block text-sm font-medium text-slate-700"
-        >
+        <p className="text-sm font-semibold text-[var(--ink-2)]">
           種別
-          <span className="ml-1 text-red-500">*</span>
-        </label>
-        <select
-          id="kind"
-          value={kind}
-          onChange={(e) => setKind(e.target.value)}
-          disabled={isSubmitting}
-          className={`mt-1 w-full rounded-lg border px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 ${
-            fieldErrors.kind
-              ? "border-red-400 bg-red-50"
-              : "border-slate-300 bg-white"
-          }`}
-        >
-          <option value="">選択してください</option>
-          {KIND_OPTIONS.map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
+          <span className="ml-1 text-[var(--u-overdue)]">*</span>
+        </p>
+        <div className="mt-2 grid grid-cols-2 gap-3">
+          {KIND_TILES.map(({ value, label, icon, desc }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setKind(value)}
+              disabled={isSubmitting}
+              className={`relative rounded-[var(--radius-card)] border-2 p-4 text-left transition-all disabled:opacity-50 ${
+                kind === value
+                  ? "border-brand bg-brand/5"
+                  : "border-[var(--rule)] bg-[var(--card)] hover:border-brand/40"
+              }`}
+            >
+              {kind === value && (
+                <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
+                  ✓
+                </span>
+              )}
+              <span className="text-2xl">{icon}</span>
+              <p className="mt-1.5 text-sm font-semibold text-[var(--ink)]">
+                {label}
+              </p>
+              <p className="text-xs text-[var(--ink-3)]">{desc}</p>
+            </button>
           ))}
-        </select>
+        </div>
         <AnimatePresence>
           {fieldErrors.kind && (
-            <motion.p {...scaleIn} role="alert" className="mt-1 text-xs text-red-600">
+            <motion.p
+              {...scaleIn}
+              role="alert"
+              className="mt-1 text-xs text-[var(--u-overdue)]"
+            >
               {fieldErrors.kind}
             </motion.p>
           )}
         </AnimatePresence>
       </div>
 
-      {/* 締切日時 */}
+      {/* 締切日時 + クイック選択 */}
       <div>
         <label
           htmlFor="deadline_at"
-          className="block text-sm font-medium text-slate-700"
+          className="block text-sm font-semibold text-[var(--ink-2)]"
         >
           締切日時
-          <span className="ml-1 text-red-500">*</span>
+          <span className="ml-1 text-[var(--u-overdue)]">*</span>
         </label>
         <input
           id="deadline_at"
@@ -242,15 +305,33 @@ export default function DeadlineForm(props: Props) {
           value={deadlineAt}
           onChange={(e) => setDeadlineAt(e.target.value)}
           disabled={isSubmitting}
-          className={`mt-1 w-full rounded-lg border px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 ${
+          className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-50 ${
             fieldErrors.deadline_at
-              ? "border-red-400 bg-red-50"
-              : "border-slate-300 bg-white"
+              ? "border-[var(--u-overdue)] bg-[var(--u-overdue-bg)]"
+              : "border-[var(--rule)] bg-[var(--card)]"
           }`}
         />
+        {/* クイック時間チップ */}
+        <div className="mt-2 flex flex-wrap gap-2">
+          {QUICK_TIMES.map(({ label, getDate }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => setDeadlineAt(toDatetimeLocal(getDate()))}
+              disabled={isSubmitting}
+              className="rounded-full bg-[var(--paper-2)] px-3 py-1 text-xs font-semibold text-[var(--ink-2)] hover:bg-brand/10 hover:text-brand disabled:opacity-50"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <AnimatePresence>
           {fieldErrors.deadline_at && (
-            <motion.p {...scaleIn} role="alert" className="mt-1 text-xs text-red-600">
+            <motion.p
+              {...scaleIn}
+              role="alert"
+              className="mt-1 text-xs text-[var(--u-overdue)]"
+            >
               {fieldErrors.deadline_at}
             </motion.p>
           )}
@@ -261,10 +342,12 @@ export default function DeadlineForm(props: Props) {
       <div>
         <label
           htmlFor="link"
-          className="block text-sm font-medium text-slate-700"
+          className="block text-sm font-semibold text-[var(--ink-2)]"
         >
           リンク
-          <span className="ml-1 text-xs text-slate-400">（任意）</span>
+          <span className="ml-1 text-xs font-normal text-[var(--ink-4)]">
+            （任意）
+          </span>
         </label>
         <input
           id="link"
@@ -274,29 +357,24 @@ export default function DeadlineForm(props: Props) {
           placeholder="https://example.com/job"
           maxLength={2048}
           disabled={isSubmitting}
-          className={`mt-1 w-full rounded-lg border px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 ${
+          className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-50 ${
             fieldErrors.link
-              ? "border-red-400 bg-red-50"
-              : "border-slate-300 bg-white"
+              ? "border-[var(--u-overdue)] bg-[var(--u-overdue-bg)]"
+              : "border-[var(--rule)] bg-[var(--card)]"
           }`}
         />
-        <AnimatePresence>
-          {fieldErrors.link && (
-            <motion.p {...scaleIn} role="alert" className="mt-1 text-xs text-red-600">
-              {fieldErrors.link}
-            </motion.p>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* メモ（任意） */}
       <div>
         <label
           htmlFor="memo"
-          className="block text-sm font-medium text-slate-700"
+          className="block text-sm font-semibold text-[var(--ink-2)]"
         >
           メモ
-          <span className="ml-1 text-xs text-slate-400">（任意）</span>
+          <span className="ml-1 text-xs font-normal text-[var(--ink-4)]">
+            （任意）
+          </span>
         </label>
         <textarea
           id="memo"
@@ -306,42 +384,54 @@ export default function DeadlineForm(props: Props) {
           maxLength={1000}
           rows={3}
           disabled={isSubmitting}
-          className={`mt-1 w-full rounded-lg border px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 ${
+          className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-50 ${
             fieldErrors.memo
-              ? "border-red-400 bg-red-50"
-              : "border-slate-300 bg-white"
+              ? "border-[var(--u-overdue)] bg-[var(--u-overdue-bg)]"
+              : "border-[var(--rule)] bg-[var(--card)]"
           }`}
         />
-        <AnimatePresence>
-          {fieldErrors.memo && (
-            <motion.p {...scaleIn} role="alert" className="mt-1 text-xs text-red-600">
-              {fieldErrors.memo}
-            </motion.p>
-          )}
-        </AnimatePresence>
       </div>
 
-      {/* 送信ボタン */}
-      <div className="flex items-center gap-4">
-        <button
-          type="submit"
-          disabled={isSubmitting || isLimitExceeded}
-          className="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isSubmitting
-            ? "保存中..."
-            : isLimitExceeded
-              ? "上限に達しています"
-              : props.mode === "edit"
-                ? "保存する"
-                : "作成する"}
-        </button>
-        <Link
-          href="/dashboard"
-          className="text-sm text-slate-500 underline hover:text-slate-700"
-        >
-          キャンセル
-        </Link>
+      {/* 通知スケジュールプレビュー */}
+      <div className="rounded-[var(--radius-card)] border border-[var(--rule)] bg-[var(--paper)] p-4">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-3)]">
+          通知スケジュール
+        </p>
+        <div className="mt-3 space-y-2">
+          {["72時間前", "24時間前", "3時間前"].map((label) => (
+            <div key={label} className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-brand" />
+              <span className="text-sm text-[var(--ink-2)]">
+                {label}にメール通知
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* スティッキー保存バー */}
+      <div className="sticky bottom-0 -mx-6 border-t border-[var(--rule)] bg-[var(--paper)]/95 px-6 py-4 backdrop-blur-sm">
+        <div className="flex items-center gap-4">
+          <button
+            type="submit"
+            disabled={isSubmitting || isLimitExceeded}
+            className="flex-1 rounded-xl bg-brand py-3 text-sm font-semibold text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isSubmitting
+              ? "保存中…"
+              : isLimitExceeded
+                ? "上限に達しています"
+                : props.mode === "edit"
+                  ? "保存する"
+                  : "作成する"}
+          </button>
+          <Link
+            href="/dashboard"
+            className="text-sm text-[var(--ink-3)] hover:text-[var(--ink-2)]"
+          >
+            キャンセル
+          </Link>
+        </div>
       </div>
     </form>
   );
