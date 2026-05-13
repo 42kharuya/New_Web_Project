@@ -1,13 +1,11 @@
 
-import { redirect } from "next/navigation";
-import { getSession } from "@/features/auth/session";
+import { requireSession } from "@/lib/auth";
 import { getUserPlan } from "@/features/deadlines/gate";
 import { UpgradeButton } from "./UpgradeButton";
 import { PortalButton } from "./PortalButton";
 
 export default async function BillingPage() {
-  const session = await getSession();
-  if (!session) redirect("/login");
+  const session = await requireSession();
 
   const plan = await getUserPlan(session.sub);
 
