@@ -13,9 +13,25 @@ const config: Config = {
           light: "#eef2ff",
           hover: "#4338ca",
         },
+        ink: "#0f0d1a",
+        paper: "#f7f5f0",
+        urgency: {
+          overdue: "#d23a3a",
+          "overdue-bg": "#fdecec",
+          today: "#e9651c",
+          "today-bg": "#fff1e8",
+          soon: "#b0871f",
+          "soon-bg": "#fff7da",
+        },
+        kind: {
+          es: { bg: "#e9defb", text: "#5b3a93" },
+          briefing: { bg: "#d8eef0", text: "#1f6168" },
+          interview: { bg: "#fde0c8", text: "#a04316" },
+        },
       },
       fontFamily: {
         sans: ["Inter", "Noto Sans JP", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
       },
       keyframes: {
         "fade-up": {
