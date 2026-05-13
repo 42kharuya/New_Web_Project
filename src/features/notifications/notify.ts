@@ -19,6 +19,7 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { sendEmail } from "@/lib/mailer";
 import { isProUser } from "@/features/deadlines/gate";
+import { KIND_LABEL } from "@/features/deadlines/format";
 import { env } from "@/lib/env";
 
 /** Free プランの通知オフセット（分） */
@@ -68,13 +69,7 @@ export function buildNotificationHtml(params: {
     .replace(/\..*$/, "")
     .slice(0, 16); // "YYYY-MM-DD HH:MM"
 
-  const kindLabels: Record<string, string> = {
-    es: "ES",
-    briefing: "説明会",
-    interview: "面接",
-    other: "その他",
-  };
-  const kindLabel = kindLabels[kind] ?? kind;
+  const kindLabel = KIND_LABEL[kind] ?? kind;
 
   const subject = `【締切${label}前】${companyName}（${kindLabel}）`;
   const html = `
