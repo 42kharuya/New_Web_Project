@@ -6,45 +6,121 @@ export const metadata = {
   title: "ログイン | 〆トラ",
 };
 
-function SealLogo() {
-  return (
-    <div
-      style={{ animation: "wiggle 2s ease-in-out infinite" }}
-      className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-brand text-4xl font-black text-white shadow-lg shadow-brand/30"
-    >
-      〆
-    </div>
-  );
-}
-
 export default function LoginPage() {
   return (
-    <main className="min-h-screen bg-[var(--paper)] flex flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm space-y-8">
-        {/* 〆印章ロゴ＋キャッチコピー＋通知トースト */}
-        <div className="text-center space-y-4">
-          <SealLogo />
-          <h1 className="text-2xl font-black tracking-tight text-[var(--ink)]">
-            締切を、出し忘れない人生に。
+    <main className="min-h-screen bg-[var(--paper)] flex flex-col lg:flex-row">
+      {/* ── 左カラム（PC では brand 紹介） ── */}
+      <div className="hidden lg:flex lg:flex-1 lg:flex-col lg:justify-between bg-[var(--ink)] text-white px-12 py-14 relative overflow-hidden">
+        {/* 装飾 〆 */}
+        <span
+          className="pointer-events-none select-none absolute right-[-40px] bottom-[-80px] text-[320px] font-black leading-none"
+          style={{ color: "rgba(255,255,255,0.04)", fontFamily: '"Noto Sans JP", serif' }}
+          aria-hidden="true"
+        >
+          〆
+        </span>
+
+        {/* ロゴ */}
+        <div className="flex items-center gap-2.5">
+          <span
+            className="brand-seal relative inline-flex h-[34px] w-[34px] items-center justify-center rounded-[9px] bg-white text-[var(--ink)]"
+            style={{
+              fontFamily: '"Noto Sans JP", serif',
+              fontWeight: 900,
+              fontSize: 20,
+              transform: "rotate(-4deg)",
+            }}
+            aria-hidden="true"
+          >
+            〆
+          </span>
+          <span className="text-[18px] font-extrabold text-white" style={{ letterSpacing: "-0.02em" }}>
+            トラ
+          </span>
+        </div>
+
+        {/* キャッチコピー */}
+        <div className="mt-auto mb-auto space-y-5 relative z-10">
+          <h1
+            className="text-[38px] font-black leading-tight"
+            style={{ letterSpacing: "-0.035em" }}
+          >
+            締切を、<br />出し忘れない<br />人生に。
           </h1>
-          {/* useSearchParams を使う LoginForm は Suspense で囲む */}
+          <p className="text-[var(--ink-4)] text-base leading-relaxed max-w-[280px]">
+            ES・説明会・面接の締切を一元管理し、<br />
+            締切前にメールで通知します。
+          </p>
+          <ul className="space-y-2 text-sm">
+            {[
+              "締切72時間前・24時間前・3時間前に通知",
+              "クレジットカード不要で10件まで無料",
+              "メールアドレスだけで30秒登録",
+            ].map((item) => (
+              <li key={item} className="flex items-center gap-2 text-white/70">
+                <span className="text-brand font-bold">✓</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* 通知トースト（PC） */}
+        <div className="relative z-10">
+          <Suspense>
+            <NotificationToast />
+          </Suspense>
+        </div>
+      </div>
+
+      {/* ── 右カラム（フォーム） ── */}
+      <div className="flex flex-1 flex-col px-6 py-10 lg:px-14 lg:py-14 lg:max-w-[480px]">
+        {/* モバイルのみ: トースト */}
+        <div className="mb-8 lg:hidden">
           <Suspense>
             <NotificationToast />
           </Suspense>
         </div>
 
-        {/* ログインフォーム */}
-        <div className="rounded-2xl border border-[var(--rule)] bg-white p-8 shadow-sm">
-          <h2 className="text-lg font-bold text-[var(--ink)]">
-            ログイン / サインアップ
-          </h2>
-          <p className="mt-1 text-sm text-[var(--ink-3)]">
-            メールアドレスを入力するとログインリンクを送ります。
-          </p>
+        {/* big-seal */}
+        <div className="mb-8">
+          <div
+            className="big-seal relative inline-flex h-[88px] w-[88px] items-center justify-center rounded-[22px] bg-[var(--ink)] text-white"
+            style={{
+              fontFamily: '"Noto Sans JP", serif',
+              fontWeight: 900,
+              fontSize: 52,
+              letterSpacing: "-0.04em",
+              transform: "rotate(-3deg)",
+            }}
+          >
+            〆
+          </div>
+        </div>
+
+        <h1
+          className="text-[30px] font-black text-[var(--ink)] leading-tight"
+          style={{ letterSpacing: "-0.035em" }}
+        >
+          締切を、出し忘れない人生に。
+        </h1>
+        <p className="mt-2 text-sm text-[var(--ink-3)]">
+          メールアドレスを入力するとログインリンクを送ります。
+        </p>
+
+        <div className="mt-8">
           <Suspense>
             <LoginForm />
           </Suspense>
         </div>
+
+        <p className="mt-auto pt-10 text-xs text-[var(--ink-4)] text-center">
+          ログインすることで
+          <a href="/terms" className="underline hover:text-[var(--ink-2)]">利用規約</a>
+          ・
+          <a href="/privacy" className="underline hover:text-[var(--ink-2)]">プライバシーポリシー</a>
+          に同意したものとみなします。
+        </p>
       </div>
     </main>
   );

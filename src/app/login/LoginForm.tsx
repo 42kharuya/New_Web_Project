@@ -45,22 +45,21 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="mt-6">
-      {/* URL のエラークエリ（expired / invalid / server） */}
+    <div className="space-y-4">
       {urlError && ERROR_MESSAGES[urlError] && (
-        <p className="mb-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">
+        <p className="rounded-xl bg-[var(--u-overdue-bg)] px-4 py-2.5 text-sm text-[var(--u-overdue)]">
           {ERROR_MESSAGES[urlError]}
         </p>
       )}
 
       {status === "sent" ? (
-        <div className="rounded-lg bg-green-50 px-4 py-4 text-sm text-green-800">
-          <p className="font-semibold">メールを送信しました 📬</p>
-          <p className="mt-1">
+        <div className="rounded-[var(--radius-card)] border border-[var(--rule)] bg-[var(--card)] px-5 py-5">
+          <p className="text-base font-bold text-[var(--ink)]">メールを送信しました</p>
+          <p className="mt-2 text-sm text-[var(--ink-2)]">
             <span className="font-mono text-xs">{email}</span>{" "}
             宛にログインリンクを送りました。
           </p>
-          <p className="mt-2 text-xs text-green-700">
+          <p className="mt-1.5 text-xs text-[var(--ink-3)]">
             リンクの有効期限は 30 分です。届かない場合は迷惑メールをご確認ください。
           </p>
           <button
@@ -68,52 +67,74 @@ export default function LoginForm() {
               setStatus("idle");
               setEmail("");
             }}
-            className="mt-3 text-xs text-green-700 underline"
+            className="mt-3 text-xs text-[var(--ink-3)] underline hover:text-[var(--ink-2)]"
           >
             別のアドレスで送り直す
           </button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-[var(--ink-2)]"
-            >
-              メールアドレス
-            </label>
-            <div className="relative mt-1">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[var(--ink-3)]">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <rect width="20" height="16" x="2" y="4" rx="2" />
-                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                </svg>
-              </span>
-              <input
-                id="email"
-                type="email"
-                required
-                autoFocus
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="block w-full rounded-lg border border-[var(--rule)] bg-white pl-9 pr-3 py-3 text-sm text-[var(--ink)] placeholder:text-[var(--ink-4)] outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          {/* input-shell */}
+          <div
+            className="flex items-center rounded-[14px] border-[1.5px] border-[var(--rule)] bg-[var(--card)] px-3.5 transition-all focus-within:border-brand focus-within:shadow-[0_0_0_4px_#eef2ff]"
+          >
+            <span className="pointer-events-none shrink-0 text-[var(--ink-3)]">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect width="20" height="16" x="2" y="4" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+            </span>
+            <input
+              id="email"
+              type="email"
+              required
+              autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="flex-1 border-none bg-transparent px-3 py-3.5 text-[15px] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
+            />
           </div>
 
           {status === "error" && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p className="rounded-xl bg-[var(--u-overdue-bg)] px-3 py-2 text-sm text-[var(--u-overdue)]">
               {apiError}
             </p>
           )}
 
+          {/* btn-primary */}
           <button
             type="submit"
             disabled={status === "loading"}
-            className="w-full rounded-lg bg-[var(--ink)] px-4 py-3 text-sm font-semibold text-white hover:bg-brand transition-colors disabled:opacity-60"
+            className="mt-1 flex w-full items-center justify-center gap-2 rounded-[14px] bg-[var(--ink)] px-4 py-[15px] text-[15px] font-bold text-[var(--paper)] transition-all hover:bg-brand disabled:opacity-60"
           >
-            {status === "loading" ? "送信中…" : "マジックリンクを送信"}
+            {status === "loading" ? (
+              <>
+                <svg
+                  className="h-4 w-4 animate-spin"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+                送信中…
+              </>
+            ) : (
+              "マジックリンクを送信"
+            )}
           </button>
         </form>
       )}

@@ -138,3 +138,42 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─── Stagger animation ─────────────────────────────────── */
+.stagger > * { animation: fade-up 480ms cubic-bezier(.2,.8,.2,1) both; }
+.stagger > *:nth-child(1) { animation-delay: 40ms; }
+.stagger > *:nth-child(2) { animation-delay: 100ms; }
+.stagger > *:nth-child(3) { animation-delay: 160ms; }
+.stagger > *:nth-child(4) { animation-delay: 220ms; }
+.stagger > *:nth-child(5) { animation-delay: 280ms; }
+.stagger > *:nth-child(6) { animation-delay: 340ms; }
+.stagger > *:nth-child(7) { animation-delay: 400ms; }
+.stagger > *:nth-child(8) { animation-delay: 460ms; }
+
+/* ─── Brand seal (header) ───────────────────────────────── */
+.brand-seal::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 5px;
+  pointer-events: none;
+}
+
+/* ─── Big seal (login) ──────────────────────────────────── */
+.big-seal::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border: 1.5px dashed var(--rule);
+  border-radius: 28px;
+  pointer-events: none;
+}
+.big-seal::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  pointer-events: none;
+}

@@ -393,21 +393,7 @@ export default function DeadlineForm(props: Props) {
       </div>
 
       {/* 通知スケジュールプレビュー */}
-      <div className="rounded-[var(--radius-card)] border border-[var(--rule)] bg-[var(--paper)] p-4">
-        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-3)]">
-          通知スケジュール
-        </p>
-        <div className="mt-3 space-y-2">
-          {["72時間前", "24時間前", "3時間前"].map((label) => (
-            <div key={label} className="flex items-center gap-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-brand" />
-              <span className="text-sm text-[var(--ink-2)]">
-                {label}にメール通知
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <NotifyPreview deadlineAt={deadlineAt} />
 
       {/* スティッキー保存バー */}
       <div className="sticky bottom-0 -mx-6 border-t border-[var(--rule)] bg-[var(--paper)]/95 px-6 py-4 backdrop-blur-sm">
@@ -434,5 +420,49 @@ export default function DeadlineForm(props: Props) {
         </div>
       </div>
     </form>
+  );
+}
+
+const NOTIFY_OFFSETS = [
+  { label: "72時間前", hours: 72 },
+  { label: "24時間前", hours: 24 },
+  { label: "3時間前", hours: 3 },
+];
+
+function formatNotifyTime(iso: string, offsetHours: number): string {
+  const d = new Date(new Date(iso).getTime() - offsetHours * 3600 * 1000);
+  return d.toLocaleString("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    month: "numeric",
+    day: "numeric",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function NotifyPreview({ deadlineAt }: { deadlineAt: string }) {
+  const hasDeadline = Boolean(deadlineAt);
+  const deadlineIso = hasDeadline ? deadlineAt + "+09:00" : "";
+
+  return (
+    <div className="rounded-[var(--radius-card)] border border-[var(--rule)] bg-[var(--brand-50)] p-4">
+      <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-4)]">
+        通知スケジュール
+      </p>
+      <div className="mt-3 space-y-2.5">
+        {NOTIFY_OFFSETS.map(({ label, hours }) => (
+          <div key={label} className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+              <span className="text-sm text-[var(--ink-2)]">{label}にメール通知</span>
+            </div>
+            <span className="font-mono text-xs text-[var(--ink-3)]">
+              {hasDeadline ? formatNotifyTime(deadlineIso, hours) : "──"}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

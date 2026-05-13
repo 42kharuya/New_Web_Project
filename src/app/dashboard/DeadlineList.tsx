@@ -60,9 +60,10 @@ const FILTER_CHIPS: { key: FilterState; label: string }[] = [
 
 type Props = {
   initialItems: DeadlineItem[];
+  totalCount?: number;
 };
 
-export default function DeadlineList({ initialItems }: Props) {
+export default function DeadlineList({ initialItems, totalCount }: Props) {
   const [items, setItems] = useState<DeadlineItem[]>(initialItems);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -159,22 +160,35 @@ export default function DeadlineList({ initialItems }: Props) {
   }
 
   return (
-    <div className="mt-4">
-      {/* フィルターチップ */}
-      <div className="flex gap-2">
-        {FILTER_CHIPS.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setFilter(key)}
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
-              filter === key
-                ? "bg-[var(--ink)] text-white"
-                : "bg-[var(--paper-2)] text-[var(--ink-3)] hover:text-[var(--ink-2)]"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+    <div className="mt-6">
+      {/* セクションヘッド */}
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-[var(--ink-2)]">締切一覧</span>
+          {totalCount !== undefined && (
+            <span
+              className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--paper-2)] px-1.5 font-mono text-[11px] font-semibold text-[var(--ink-3)]"
+            >
+              {totalCount}
+            </span>
+          )}
+        </div>
+        {/* フィルターチップ */}
+        <div className="flex gap-1">
+          {FILTER_CHIPS.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setFilter(key)}
+              className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                filter === key
+                  ? "bg-[var(--ink)] text-[var(--paper)]"
+                  : "bg-[var(--paper-2)] text-[var(--ink-3)] hover:text-[var(--ink-2)]"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {errorMsg && (
