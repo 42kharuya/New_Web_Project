@@ -1,25 +1,16 @@
-
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import DeadlineList, { type DeadlineItem } from "./DeadlineList";
+import { HeroCard } from "./HeroCard";
 import { FREE_ITEM_LIMIT, isProUser } from "@/features/deadlines/gate";
 import { trackEvent } from "@/features/analytics";
-import { getUrgencyLevel } from "@/features/deadlines/format";
 
-/**
- * /dashboard – Server Component
- *
- * - 未ログイン → /login にリダイレクト
- * - ログイン済 → Prisma で deadline_at 昇順取得し DeadlineList に渡す
- */
 export default async function DashboardPage() {
   const session = await requireSession();
 
-  // 2. ダッシュボード表示の計測（重複は集計側で吸収する設計・エラーはキャッチ済みなのでawait可）
   await trackEvent({ name: "dashboard_viewed", userId: session.sub });
 
-  // 3. ログインユーザーのアイテムを deadline_at 昇順で取得 & Pro 判定を並列実行
   const [rows, pro] = await Promise.all([
     prisma.deadlineItem.findMany({
       where: { userId: session.sub },
@@ -37,80 +28,43 @@ export default async function DashboardPage() {
     isProUser(session.sub),
   ]);
 
-  // 4. Date → ISO string に変換（Client Component へのシリアライズ要件）
   const items: DeadlineItem[] = rows.map((row) => ({
     ...row,
     deadlineAt: row.deadlineAt.toISOString(),
   }));
 
-  // Free ユーザーが上限に達しているか
   const isAtFreeLimit = !pro && items.length >= FREE_ITEM_LIMIT;
-
-  const todoCount = items.filter((i) => i.status === "todo").length;
-  const overdueCount = items.filter(
-    (i) => i.status === "todo" && getUrgencyLevel(i.deadlineAt) === "overdue",
-  ).length;
+  const nextItem = items.find((i) => i.status === "todo") ?? null;
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
-      {/* ヘッダー */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">ダッシュボード</h1>
-        <Link
-          href="/deadline/new"
-          className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-        >
-          + 締切を追加
-        </Link>
-      </div>
-
-      {/* 件数サマリー */}
-      {items.length > 0 && (
-        <div className="mt-4 grid grid-cols-3 gap-3">
-          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-center">
-            <p className="text-2xl font-bold text-slate-900">{items.length}</p>
-            <p className="mt-0.5 text-xs text-slate-500">登録中</p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-center">
-            <p className="text-2xl font-bold text-slate-900">{todoCount}</p>
-            <p className="mt-0.5 text-xs text-slate-500">未対応</p>
-          </div>
-          <div
-            className={`rounded-lg border px-4 py-3 text-center ${
-              overdueCount > 0
-                ? "border-red-200 bg-red-50"
-                : "border-slate-200 bg-white"
-            }`}
-          >
-            <p
-              className={`text-2xl font-bold ${
-                overdueCount > 0 ? "text-red-600" : "text-slate-900"
-              }`}
-            >
-              {overdueCount}
-            </p>
-            <p className="mt-0.5 text-xs text-slate-500">期限切れ</p>
-          </div>
+    <main className="mx-auto max-w-3xl px-4 py-6">
+      {/* HeroCard: 次の締切カウントダウン */}
+      {nextItem && (
+        <div className="mb-6">
+          <HeroCard item={nextItem} />
         </div>
       )}
 
       {/* Free 枠上限バナー */}
       {isAtFreeLimit && (
-        <div className="mt-4 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
-          <p className="text-amber-800">
-            <span className="font-semibold">Free プランの上限（{FREE_ITEM_LIMIT}件）に達しています。</span>
-            {"　"}新しい締切を追加するには Pro へのアップグレードが必要です。
+        <div className="mb-4 flex items-center justify-between rounded-[var(--radius-card)] border border-[var(--u-soon-bg)] bg-[var(--u-soon-bg)] px-4 py-3 text-sm">
+          <p className="text-[var(--u-soon)]">
+            <span className="font-semibold">
+              Free プランの上限（{FREE_ITEM_LIMIT}件）に達しています。
+            </span>
+            {"　"}
+            Pro へのアップグレードで無制限に追加できます。
           </p>
           <Link
             href="/billing"
-            className="ml-4 shrink-0 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
+            className="ml-4 shrink-0 rounded-lg bg-[var(--u-soon)] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
           >
             Pro にアップグレード
           </Link>
         </div>
       )}
 
-      {/* 締切一覧（クライアントコンポーネント） */}
+      {/* 締切一覧 */}
       <DeadlineList initialItems={items} />
     </main>
   );
