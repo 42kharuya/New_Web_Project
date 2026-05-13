@@ -8,14 +8,125 @@
 @import "@fontsource/inter/900.css";
 @import "@fontsource/noto-sans-jp/400.css";
 @import "@fontsource/noto-sans-jp/700.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/600.css";
 
+/* ─── Design Tokens ─────────────────────────────────────── */
 :root {
   color-scheme: light;
+
+  /* Surface */
+  --paper:   #f7f5f0;
+  --paper-2: #ede9df;
+  --card:    #ffffff;
+
+  /* Ink (text hierarchy) */
+  --ink:   #0f0d1a;
+  --ink-2: #2c2740;
+  --ink-3: #6b6580;
+  --ink-4: #9a93ad;
+
+  /* Rule */
+  --rule: rgba(15, 13, 26, 0.08);
+
+  /* Brand */
+  --brand:     #4f46e5;
+  --brand-600: #4338ca;
+  --brand-50:  #eef2ff;
+  --brand-100: #e0e7ff;
+
+  /* Urgency */
+  --u-overdue:    #d23a3a;
+  --u-overdue-bg: #fdecec;
+  --u-today:      #e9651c;
+  --u-today-bg:   #fff1e8;
+  --u-soon:       #b0871f;
+  --u-soon-bg:    #fff7da;
+  --u-normal:     #4f46e5;
+  --u-normal-bg:  #eef2ff;
+
+  /* Status */
+  --s-done:    #1f8a5b;
+  --s-done-bg: #e6f5ed;
+
+  /* Radius */
+  --radius-card: 18px;
+
+  /* Shadow */
+  --shadow-card: 0 4px 16px rgba(15, 13, 26, 0.08);
+  --shadow-pop:  0 8px 32px rgba(15, 13, 26, 0.14);
 }
 
+/* ─── Dark theme ────────────────────────────────────────── */
+[data-theme="ink"] {
+  color-scheme: dark;
+  --paper:   #131220;
+  --paper-2: #1a1830;
+  --card:    #1f1d33;
+  --ink:     #f6f4ff;
+  --ink-2:   #d4d0f0;
+  --ink-3:   #8b86b0;
+  --ink-4:   #5a5680;
+  --rule:    rgba(246, 244, 255, 0.08);
+}
+
+/* ─── Base styles ───────────────────────────────────────── */
 body {
-  @apply bg-white text-gray-900;
+  background-color: var(--paper);
+  color: var(--ink);
   font-family: "Inter", "Noto Sans JP", sans-serif;
+  font-feature-settings: "ss01", "cv11";
+  letter-spacing: -0.01em;
+}
+
+/* ─── Kind tag colors ───────────────────────────────────── */
+.kind-es        { background: #e9defb; color: #5b3a93; }
+.kind-briefing  { background: #d8eef0; color: #1f6168; }
+.kind-interview { background: #fde0c8; color: #a04316; }
+.kind-other     { background: var(--paper-2); color: var(--ink-2); }
+
+/* ─── Motion ────────────────────────────────────────────── */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  25%       { transform: rotate(2deg); }
+  50%       { transform: rotate(-1deg); }
+  75%       { transform: rotate(3deg); }
+}
+
+@keyframes pop-in {
+  0%   { opacity: 0; transform: scale(0.85); }
+  60%  { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-in-down {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes draw-prog {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(var(--p, 1)); }
+}
+
+@keyframes ring-fill {
+  from { stroke-dashoffset: var(--ring-from, 138); }
+  to   { stroke-dashoffset: var(--ring-to, 0); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.05); opacity: 0.85; }
+}
+
+/* Tailwind 既存のアニメーション */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
