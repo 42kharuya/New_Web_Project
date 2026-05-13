@@ -29,7 +29,7 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/features/auth/session";
+import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { validateUpdateDeadline } from "@/features/deadlines/validate";
 
@@ -38,14 +38,9 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function PATCH(req: NextRequest, { params }: RouteContext) {
   try {
     // 1. 認証確認
-    const session = await getSession(req);
-    if (!session) {
-      return NextResponse.json(
-        { error: "ログインが必要です" },
-        { status: 401 },
-      );
-    }
-    const userId = session.sub;
+    const auth = await requireAuth(req);
+    if (!auth.ok) return auth.response;
+    const userId = auth.session.sub;
     const { id } = await params;
 
     // 2. バリデーション
@@ -104,14 +99,9 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
 export async function DELETE(req: NextRequest, { params }: RouteContext) {
   try {
     // 1. 認証確認
-    const session = await getSession(req);
-    if (!session) {
-      return NextResponse.json(
-        { error: "ログインが必要です" },
-        { status: 401 },
-      );
-    }
-    const userId = session.sub;
+    const auth = await requireAuth(req);
+    if (!auth.ok) return auth.response;
+    const userId = auth.session.sub;
     const { id } = await params;
 
     // 2. ユーザースコープ確認

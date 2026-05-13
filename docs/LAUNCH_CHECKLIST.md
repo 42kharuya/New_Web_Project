@@ -42,7 +42,6 @@
 
 - [docs/RUNBOOK.md](RUNBOOK.md)
 - [.env.example](../.env.example)
-- [docs/DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
 
 ## 5. マーケ・導線
 
@@ -54,7 +53,6 @@
 
 参考テンプレ:
 
-- [docs/GROWTH_PLAYBOOK.md](GROWTH_PLAYBOOK.md)
 - [docs/SEO_GTM_CHECKLIST.md](SEO_GTM_CHECKLIST.md)
 
 ## 6. QA / テスト（ローンチ前）

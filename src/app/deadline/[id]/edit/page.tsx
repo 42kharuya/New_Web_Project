@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSession } from "@/features/auth/session";
 import { redirect } from "next/navigation";
+import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import DeadlineForm from "@/app/deadline/new/DeadlineForm";
 
@@ -25,10 +26,7 @@ function toJstDatetimeLocal(iso: string): string {
 }
 
 export default async function DeadlineEditPage({ params }: Props) {
-  const session = await getSession();
-  if (!session) {
-    redirect("/login");
-  }
+  const session = await requireSession();
 
   const { id } = await params;
 

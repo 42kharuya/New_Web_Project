@@ -21,7 +21,7 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/features/auth/session";
+import { requireAuth } from "@/lib/api";
 import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
@@ -37,15 +37,10 @@ export function GET() {
 export async function POST(req: NextRequest) {
   try {
     // 1. 認証確認
-    const session = await getSession(req);
-    if (!session) {
-      return NextResponse.json(
-        { error: "ログインが必要です" },
-        { status: 401 },
-      );
-    }
-    const userId = session.sub;
-    const email = session.email;
+    const auth = await requireAuth(req);
+    if (!auth.ok) return auth.response;
+    const userId = auth.session.sub;
+    const email = auth.session.email;
 
     // 2. 環境変数取得
     const priceId = env.STRIPE_PRICE_ID;

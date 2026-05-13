@@ -30,6 +30,72 @@ export type ValidateResult =
   | { ok: true; data: NormalizedDeadlineInput }
   | { ok: false; errors: ValidationError[] };
 
+// ----------------------------------------------------------------
+// フィールドレベルのバリデーターヘルパー（プライベート）
+// ----------------------------------------------------------------
+
+type FieldOk<T> = { ok: true; value: T };
+type FieldErr = { ok: false; error: ValidationError };
+
+function checkCompanyName(raw: unknown): FieldOk<string> | FieldErr {
+  const value = typeof raw === "string" ? raw.trim() : "";
+  if (!value)
+    return { ok: false, error: { field: "company_name", message: "企業名は必須です" } };
+  if (value.length > 100)
+    return { ok: false, error: { field: "company_name", message: "企業名は100文字以内で入力してください" } };
+  return { ok: true, value };
+}
+
+function checkKind(raw: unknown): FieldOk<DeadlineKindValue> | FieldErr {
+  const value = typeof raw === "string" ? raw.trim() : "";
+  if (!value)
+    return { ok: false, error: { field: "kind", message: "種別は必須です" } };
+  if (!(VALID_KINDS as readonly string[]).includes(value))
+    return { ok: false, error: { field: "kind", message: `種別は ${VALID_KINDS.join(" / ")} のいずれかを指定してください` } };
+  return { ok: true, value: value as DeadlineKindValue };
+}
+
+function checkDeadlineAt(raw: unknown): FieldOk<Date> | FieldErr {
+  const value = typeof raw === "string" ? raw.trim() : "";
+  if (!value)
+    return { ok: false, error: { field: "deadline_at", message: "締切日時は必須です" } };
+  const d = new Date(value);
+  if (isNaN(d.getTime()))
+    return { ok: false, error: { field: "deadline_at", message: "締切日時は有効な ISO 8601 形式で入力してください" } };
+  return { ok: true, value: d };
+}
+
+function checkStatus(raw: unknown): FieldOk<DeadlineStatusValue> | FieldErr {
+  const value = typeof raw === "string" ? raw.trim() : "";
+  if (!(VALID_STATUSES as readonly string[]).includes(value))
+    return { ok: false, error: { field: "status", message: `ステータスは ${VALID_STATUSES.join(" / ")} のいずれかを指定してください` } };
+  return { ok: true, value: value as DeadlineStatusValue };
+}
+
+function checkLink(raw: unknown): FieldOk<string | null> | FieldErr {
+  if (raw === null || raw === "" || raw === undefined) return { ok: true, value: null };
+  const value = typeof raw === "string" ? raw.trim() : "";
+  if (!value) return { ok: true, value: null };
+  if (value.length > 2048)
+    return { ok: false, error: { field: "link", message: "リンクは2048文字以内で入力してください" } };
+  if (!/^https?:\/\/.+/.test(value))
+    return { ok: false, error: { field: "link", message: "リンクは http:// または https:// で始まる URL を入力してください" } };
+  return { ok: true, value };
+}
+
+function checkMemo(raw: unknown): FieldOk<string | null> | FieldErr {
+  if (raw === null || raw === "" || raw === undefined) return { ok: true, value: null };
+  const value = typeof raw === "string" ? raw.trim() : "";
+  if (!value) return { ok: true, value: null };
+  if (value.length > 1000)
+    return { ok: false, error: { field: "memo", message: "メモは1000文字以内で入力してください" } };
+  return { ok: true, value };
+}
+
+// ----------------------------------------------------------------
+// POST /api/deadlines バリデーション
+// ----------------------------------------------------------------
+
 /**
  * POST /api/deadlines のリクエストボディを検証して正規化する。
  *
@@ -52,98 +118,28 @@ export function validateCreateDeadline(body: unknown): ValidateResult {
   }
   const b = body as Record<string, unknown>;
 
-  // company_name
-  const companyName =
-    typeof b.company_name === "string" ? b.company_name.trim() : "";
-  if (!companyName) {
-    errors.push({ field: "company_name", message: "企業名は必須です" });
-  } else if (companyName.length > 100) {
-    errors.push({
-      field: "company_name",
-      message: "企業名は100文字以内で入力してください",
-    });
-  }
+  const companyResult = checkCompanyName(b.company_name);
+  if (!companyResult.ok) errors.push(companyResult.error);
 
-  // kind
-  const rawKind = typeof b.kind === "string" ? b.kind.trim() : "";
-  if (!rawKind) {
-    errors.push({ field: "kind", message: "種別は必須です" });
-  } else if (!(VALID_KINDS as readonly string[]).includes(rawKind)) {
-    errors.push({
-      field: "kind",
-      message: `種別は ${VALID_KINDS.join(" / ")} のいずれかを指定してください`,
-    });
-  }
+  const kindResult = checkKind(b.kind);
+  if (!kindResult.ok) errors.push(kindResult.error);
 
-  // deadline_at
-  const rawDeadline =
-    typeof b.deadline_at === "string" ? b.deadline_at.trim() : "";
-  let deadlineAt: Date | null = null;
-  if (!rawDeadline) {
-    errors.push({ field: "deadline_at", message: "締切日時は必須です" });
-  } else {
-    const d = new Date(rawDeadline);
-    if (isNaN(d.getTime())) {
-      errors.push({
-        field: "deadline_at",
-        message: "締切日時は有効な ISO 8601 形式で入力してください",
-      });
-    } else {
-      deadlineAt = d;
-    }
-  }
+  const deadlineResult = checkDeadlineAt(b.deadline_at);
+  if (!deadlineResult.ok) errors.push(deadlineResult.error);
 
   // status（任意、デフォルト "todo"）
-  const rawStatus =
-    typeof b.status === "string" ? b.status.trim() : "todo";
-  const status: DeadlineStatusValue =
-    (VALID_STATUSES as readonly string[]).includes(rawStatus)
-      ? (rawStatus as DeadlineStatusValue)
-      : "todo";
-  if (
-    typeof b.status === "string" &&
-    !(VALID_STATUSES as readonly string[]).includes(b.status.trim())
-  ) {
-    errors.push({
-      field: "status",
-      message: `ステータスは ${VALID_STATUSES.join(" / ")} のいずれかを指定してください`,
-    });
+  let status: DeadlineStatusValue = "todo";
+  if (b.status !== undefined) {
+    const statusResult = checkStatus(b.status);
+    if (!statusResult.ok) errors.push(statusResult.error);
+    else status = statusResult.value;
   }
 
-  // link（任意）
-  let link: string | null = null;
-  if (b.link !== undefined && b.link !== null && b.link !== "") {
-    const rawLink = typeof b.link === "string" ? b.link.trim() : "";
-    if (!rawLink) {
-      link = null;
-    } else if (rawLink.length > 2048) {
-      errors.push({
-        field: "link",
-        message: "リンクは2048文字以内で入力してください",
-      });
-    } else if (!/^https?:\/\/.+/.test(rawLink)) {
-      errors.push({
-        field: "link",
-        message: "リンクは http:// または https:// で始まる URL を入力してください",
-      });
-    } else {
-      link = rawLink;
-    }
-  }
+  const linkResult = checkLink(b.link);
+  if (!linkResult.ok) errors.push(linkResult.error);
 
-  // memo（任意）
-  let memo: string | null = null;
-  if (b.memo !== undefined && b.memo !== null && b.memo !== "") {
-    const rawMemo = typeof b.memo === "string" ? b.memo.trim() : "";
-    if (rawMemo.length > 1000) {
-      errors.push({
-        field: "memo",
-        message: "メモは1000文字以内で入力してください",
-      });
-    } else {
-      memo = rawMemo || null;
-    }
-  }
+  const memoResult = checkMemo(b.memo);
+  if (!memoResult.ok) errors.push(memoResult.error);
 
   if (errors.length > 0) {
     return { ok: false, errors };
@@ -152,12 +148,12 @@ export function validateCreateDeadline(body: unknown): ValidateResult {
   return {
     ok: true,
     data: {
-      companyName,
-      kind: rawKind as DeadlineKindValue,
-      deadlineAt: deadlineAt!,
+      companyName: (companyResult as FieldOk<string>).value,
+      kind: (kindResult as FieldOk<DeadlineKindValue>).value,
+      deadlineAt: (deadlineResult as FieldOk<Date>).value,
       status,
-      link,
-      memo,
+      link: (linkResult as FieldOk<string | null>).value,
+      memo: (memoResult as FieldOk<string | null>).value,
     },
   };
 }
@@ -205,114 +201,46 @@ export function validateUpdateDeadline(body: unknown): ValidateUpdateResult {
 
   const data: NormalizedUpdateInput = {};
 
-  // company_name（指定された場合のみ）
   if (b.company_name !== undefined) {
-    const companyName =
-      typeof b.company_name === "string" ? b.company_name.trim() : "";
-    if (!companyName) {
-      errors.push({ field: "company_name", message: "企業名は必須です" });
-    } else if (companyName.length > 100) {
-      errors.push({
-        field: "company_name",
-        message: "企業名は100文字以内で入力してください",
-      });
-    } else {
-      data.companyName = companyName;
-    }
+    const r = checkCompanyName(b.company_name);
+    if (!r.ok) errors.push(r.error);
+    else data.companyName = r.value;
   }
 
-  // kind（指定された場合のみ）
   if (b.kind !== undefined) {
-    const rawKind = typeof b.kind === "string" ? b.kind.trim() : "";
-    if (!(VALID_KINDS as readonly string[]).includes(rawKind)) {
-      errors.push({
-        field: "kind",
-        message: `種別は ${VALID_KINDS.join(" / ")} のいずれかを指定してください`,
-      });
-    } else {
-      data.kind = rawKind as DeadlineKindValue;
-    }
+    const r = checkKind(b.kind);
+    if (!r.ok) errors.push(r.error);
+    else data.kind = r.value;
   }
 
-  // deadline_at（指定された場合のみ）
   if (b.deadline_at !== undefined) {
-    const rawDeadline =
-      typeof b.deadline_at === "string" ? b.deadline_at.trim() : "";
-    if (!rawDeadline) {
-      errors.push({ field: "deadline_at", message: "締切日時は必須です" });
-    } else {
-      const d = new Date(rawDeadline);
-      if (isNaN(d.getTime())) {
-        errors.push({
-          field: "deadline_at",
-          message: "締切日時は有効な ISO 8601 形式で入力してください",
-        });
-      } else {
-        data.deadlineAt = d;
-      }
-    }
+    const r = checkDeadlineAt(b.deadline_at);
+    if (!r.ok) errors.push(r.error);
+    else data.deadlineAt = r.value;
   }
 
-  // status（指定された場合のみ）
   if (b.status !== undefined) {
-    const rawStatus = typeof b.status === "string" ? b.status.trim() : "";
-    if (!(VALID_STATUSES as readonly string[]).includes(rawStatus)) {
-      errors.push({
-        field: "status",
-        message: `ステータスは ${VALID_STATUSES.join(" / ")} のいずれかを指定してください`,
-      });
-    } else {
-      data.status = rawStatus as DeadlineStatusValue;
-    }
+    const r = checkStatus(b.status);
+    if (!r.ok) errors.push(r.error);
+    else data.status = r.value;
   }
 
-  // link（指定された場合のみ。null で削除）
   if (b.link !== undefined) {
-    if (b.link === null || b.link === "") {
-      data.link = null;
-    } else {
-      const rawLink = typeof b.link === "string" ? b.link.trim() : "";
-      if (!rawLink) {
-        data.link = null;
-      } else if (rawLink.length > 2048) {
-        errors.push({
-          field: "link",
-          message: "リンクは2048文字以内で入力してください",
-        });
-      } else if (!/^https?:\/\/.+/.test(rawLink)) {
-        errors.push({
-          field: "link",
-          message:
-            "リンクは http:// または https:// で始まる URL を入力してください",
-        });
-      } else {
-        data.link = rawLink;
-      }
-    }
+    const r = checkLink(b.link);
+    if (!r.ok) errors.push(r.error);
+    else data.link = r.value;
   }
 
-  // memo（指定された場合のみ。null で削除）
   if (b.memo !== undefined) {
-    if (b.memo === null || b.memo === "") {
-      data.memo = null;
-    } else {
-      const rawMemo = typeof b.memo === "string" ? b.memo.trim() : "";
-      if (rawMemo.length > 1000) {
-        errors.push({
-          field: "memo",
-          message: "メモは1000文字以内で入力してください",
-        });
-      } else {
-        data.memo = rawMemo || null;
-      }
-    }
+    const r = checkMemo(b.memo);
+    if (!r.ok) errors.push(r.error);
+    else data.memo = r.value;
   }
 
   if (errors.length > 0) {
     return { ok: false, errors };
   }
 
-  // 少なくとも 1 フィールドが必要
   if (Object.keys(data).length === 0) {
     return {
       ok: false,
