@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { fadeUp } from "@/lib/motion";
 import { LP_CONTENT } from "./content";
 
 /**
@@ -7,42 +11,37 @@ export function HowItWorksSection() {
   const { howItWorks } = LP_CONTENT;
 
   return (
-    <section className="py-20" style={{ backgroundColor: "#ffffff" }}>
+    <section className="bg-white py-20">
       <div className="mx-auto max-w-5xl px-6">
-        <h2
-          className="text-center text-3xl font-bold"
-          style={{
-            color: "#222222",
-            lineHeight: 1.2,
-            letterSpacing: "-0.02em",
-          }}
+        <motion.h2
+          initial={fadeUp.initial}
+          whileInView={fadeUp.animate}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={fadeUp.transition}
+          className="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl"
         >
           {howItWorks.heading}
-        </h2>
+        </motion.h2>
         <div className="mx-auto mt-12 grid max-w-3xl grid-cols-1 gap-6 sm:grid-cols-3">
-          {howItWorks.steps.map(({ number, label }) => (
-            <div
+          {howItWorks.steps.map(({ number, label }, i) => (
+            <motion.div
               key={number}
-              className="rounded-[14px] p-6"
-              style={{
-                backgroundColor: "#ffffff",
-                border: "1px solid #dddddd",
-              }}
+              initial={fadeUp.initial}
+              whileInView={fadeUp.animate}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ ...fadeUp.transition, delay: i * 0.06 }}
+              className="rounded-2xl border border-gray-200 bg-white p-6"
             >
               <div
-                className="mb-4 text-3xl font-bold"
-                style={{ color: "#ff385c" }}
+                className="mb-4 text-3xl font-bold text-indigo-600"
                 aria-label={`ステップ ${number}`}
               >
                 {number}
               </div>
-              <p
-                className="text-base leading-relaxed"
-                style={{ color: "#222222", fontWeight: 500 }}
-              >
+              <p className="text-base font-medium leading-relaxed text-gray-900">
                 {label}
               </p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
