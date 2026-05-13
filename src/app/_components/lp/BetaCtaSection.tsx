@@ -1,41 +1,56 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { fadeUp } from "@/lib/motion";
 import { LP_CONTENT } from "./content";
 import { LeadCaptureDialog } from "./LeadCaptureDialog";
 
 /**
- * BetaCtaSection — 下部の登録導線セクション（ダーク背景）
+ * BetaCtaSection — 下部の登録導線セクション
  * CTA: 先行利用に登録する
  */
 export function BetaCtaSection() {
   const { betaCta } = LP_CONTENT;
 
   return (
-    <section
-      className="py-24 text-center"
-      style={{ backgroundColor: "#222222" }}
-    >
+    <section className="bg-indigo-600 py-24 text-center">
       <div className="mx-auto max-w-5xl px-6">
-        <h2
-          className="text-3xl font-bold sm:text-4xl"
-          style={{
-            color: "#ffffff",
-            lineHeight: 1.2,
-            letterSpacing: "-0.02em",
-          }}
+        <motion.h2
+          initial={fadeUp.initial}
+          whileInView={fadeUp.animate}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={fadeUp.transition}
+          className="text-3xl font-bold tracking-tight text-white sm:text-4xl"
         >
           {betaCta.heading}
-        </h2>
-        <p
-          className="mx-auto mt-4 max-w-lg text-base leading-relaxed"
-          style={{ color: "#929292", fontWeight: 500 }}
+        </motion.h2>
+        <motion.p
+          initial={fadeUp.initial}
+          whileInView={fadeUp.animate}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ ...fadeUp.transition, delay: 0.06 }}
+          className="mx-auto mt-4 max-w-lg text-base font-medium leading-relaxed text-indigo-100"
         >
           {betaCta.body}
-        </p>
-        <div className="mt-10">
+        </motion.p>
+        <motion.div
+          initial={fadeUp.initial}
+          whileInView={fadeUp.animate}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ ...fadeUp.transition, delay: 0.12 }}
+          className="mt-10"
+        >
           <LeadCaptureDialog label={betaCta.ctaLabel} ctaLocation="bottom" dark />
-        </div>
-        <p className="mt-4 text-sm" style={{ color: "#6a6a6a" }}>
+        </motion.div>
+        <motion.p
+          initial={fadeUp.initial}
+          whileInView={fadeUp.animate}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ ...fadeUp.transition, delay: 0.18 }}
+          className="mt-4 text-sm text-indigo-200"
+        >
           {betaCta.note}
-        </p>
+        </motion.p>
       </div>
     </section>
   );

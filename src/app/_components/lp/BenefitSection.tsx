@@ -1,45 +1,45 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { fadeUp } from "@/lib/motion";
 import { LP_CONTENT } from "./content";
 
 /**
- * BenefitSection — 利用後の変化を具体化するセクション（ダーク背景）
+ * BenefitSection — 利用後の変化を具体化するセクション
  */
 export function BenefitSection() {
   const { benefit } = LP_CONTENT;
 
   return (
-    <section className="py-20" style={{ backgroundColor: "#f7f7f7" }}>
+    <section className="bg-gray-50 py-20">
       <div className="mx-auto max-w-5xl px-6">
-        <h2
-          className="text-center text-3xl font-bold"
-          style={{
-            color: "#222222",
-            lineHeight: 1.2,
-            letterSpacing: "-0.02em",
-          }}
+        <motion.h2
+          initial={fadeUp.initial}
+          whileInView={fadeUp.animate}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={fadeUp.transition}
+          className="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl"
         >
           {benefit.heading}
-        </h2>
+        </motion.h2>
         <ul className="mx-auto mt-10 max-w-md space-y-4">
-          {benefit.items.map((item) => (
-            <li
+          {benefit.items.map((item, i) => (
+            <motion.li
               key={item}
-              className="flex items-center gap-3 rounded-[14px] border p-5 text-base"
-              style={{
-                color: "#222222",
-                backgroundColor: "#ffffff",
-                borderColor: "#dddddd",
-                fontWeight: 500,
-              }}
+              initial={fadeUp.initial}
+              whileInView={fadeUp.animate}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ ...fadeUp.transition, delay: i * 0.06 }}
+              className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-5 text-base font-medium text-gray-900"
             >
               <span
-                className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                style={{ backgroundColor: "#ff385c", color: "#ffffff" }}
+                className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white"
                 aria-hidden="true"
               >
                 ✓
               </span>
               {item}
-            </li>
+            </motion.li>
           ))}
         </ul>
       </div>

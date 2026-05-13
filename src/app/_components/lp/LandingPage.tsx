@@ -11,22 +11,15 @@ import { LeadCaptureDialog } from "./LeadCaptureDialog";
 
 /**
  * LP全体レイアウトを束ねる Server Component
- * デザイン方針: docs/DESIGN.md 参照（パーチメント系カラー + テラコッタCTA）
+ * デザイン方針: docs/DESIGN_SYSTEM.md 参照（Indigoブランドカラー）
  */
 export function LandingPage() {
   const { hero } = LP_CONTENT;
 
   return (
-    // Canvas White (#ffffff) — Airbnb デザインシステム準拠
-    <div className="min-h-screen" style={{ backgroundColor: "#ffffff" }}>
+    <div className="min-h-screen bg-white">
       {/* ナビゲーション */}
-      <header
-        className="sticky top-0 z-10 border-b"
-        style={{
-          borderColor: "#dddddd",
-          backgroundColor: "#ffffff",
-        }}
-      >
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
             <Image
@@ -36,10 +29,7 @@ export function LandingPage() {
               height={72}
               className="rounded-sm"
             />
-            <span
-              className="text-lg font-semibold"
-              style={{ color: "#222222" }}
-            >
+            <span className="text-lg font-semibold text-gray-900">
               〆トラ
             </span>
           </div>
@@ -59,10 +49,7 @@ export function LandingPage() {
       </main>
 
       {/* フッター */}
-      <footer
-        className="border-t py-8 text-center text-sm"
-        style={{ borderColor: "#dddddd", backgroundColor: "#f7f7f7", color: "#6a6a6a" }}
-      >
+      <footer className="border-t border-gray-200 bg-gray-50 py-8 text-center text-sm text-gray-500">
         © 2026 〆トラ
       </footer>
     </div>
