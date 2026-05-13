@@ -37,7 +37,7 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/features/auth/session";
+import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { validateCreateDeadline } from "@/features/deadlines/validate";
 import { FREE_ITEM_LIMIT, isProUser } from "@/features/deadlines/gate";
@@ -46,14 +46,9 @@ import { trackEvent } from "@/features/analytics";
 export async function POST(req: NextRequest) {
   try {
     // 1. 認証確認
-    const session = await getSession(req);
-    if (!session) {
-      return NextResponse.json(
-        { error: "ログインが必要です" },
-        { status: 401 },
-      );
-    }
-    const userId = session.sub;
+    const auth = await requireAuth(req);
+    if (!auth.ok) return auth.response;
+    const userId = auth.session.sub;
 
     // 2. バリデーション
     const body = await req.json().catch(() => ({}));
@@ -110,14 +105,9 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     // 1. 認証確認
-    const session = await getSession(req);
-    if (!session) {
-      return NextResponse.json(
-        { error: "ログインが必要です" },
-        { status: 401 },
-      );
-    }
-    const userId = session.sub;
+    const auth = await requireAuth(req);
+    if (!auth.ok) return auth.response;
+    const userId = auth.session.sub;
 
     // 2. ログインユーザーのアイテムのみ取得（deadline_at 昇順）
     const items = await prisma.deadlineItem.findMany({
