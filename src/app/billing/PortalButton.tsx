@@ -40,7 +40,7 @@ export function PortalButton() {
         </p>
       )}
       <button
-        className="rounded border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+        className="rounded-xl border border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
         disabled={loading}
         onClick={handlePortal}
         type="button"
