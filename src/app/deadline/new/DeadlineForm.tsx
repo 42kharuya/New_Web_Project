@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import { KIND_LABEL } from "@/features/deadlines/format";
+import { scaleIn } from "@/lib/motion";
 
 type FieldErrors = Record<string, string>;
 type Status = "idle" | "submitting" | "error" | "limit_exceeded";
@@ -126,7 +128,7 @@ export default function DeadlineForm(props: Props) {
   const isLimitExceeded = status === "limit_exceeded";
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-6">
+    <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-5">
       {/* Free 枠上限エラー（create モードのみ） */}
       {isLimitExceeded && (
         <div
@@ -174,17 +176,19 @@ export default function DeadlineForm(props: Props) {
           placeholder="例: 株式会社テクノロジー"
           maxLength={100}
           disabled={isSubmitting}
-          className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+          className={`mt-1 w-full rounded-lg border px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 ${
             fieldErrors.company_name
               ? "border-red-400 bg-red-50"
               : "border-slate-300 bg-white"
           }`}
         />
-        {fieldErrors.company_name && (
-          <p className="mt-1 text-xs text-red-600" role="alert">
-            {fieldErrors.company_name}
-          </p>
-        )}
+        <AnimatePresence>
+          {fieldErrors.company_name && (
+            <motion.p {...scaleIn} role="alert" className="mt-1 text-xs text-red-600">
+              {fieldErrors.company_name}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* 種別 */}
@@ -201,7 +205,7 @@ export default function DeadlineForm(props: Props) {
           value={kind}
           onChange={(e) => setKind(e.target.value)}
           disabled={isSubmitting}
-          className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+          className={`mt-1 w-full rounded-lg border px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 ${
             fieldErrors.kind
               ? "border-red-400 bg-red-50"
               : "border-slate-300 bg-white"
@@ -214,11 +218,13 @@ export default function DeadlineForm(props: Props) {
             </option>
           ))}
         </select>
-        {fieldErrors.kind && (
-          <p className="mt-1 text-xs text-red-600" role="alert">
-            {fieldErrors.kind}
-          </p>
-        )}
+        <AnimatePresence>
+          {fieldErrors.kind && (
+            <motion.p {...scaleIn} role="alert" className="mt-1 text-xs text-red-600">
+              {fieldErrors.kind}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* 締切日時 */}
@@ -236,17 +242,19 @@ export default function DeadlineForm(props: Props) {
           value={deadlineAt}
           onChange={(e) => setDeadlineAt(e.target.value)}
           disabled={isSubmitting}
-          className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+          className={`mt-1 w-full rounded-lg border px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 ${
             fieldErrors.deadline_at
               ? "border-red-400 bg-red-50"
               : "border-slate-300 bg-white"
           }`}
         />
-        {fieldErrors.deadline_at && (
-          <p className="mt-1 text-xs text-red-600" role="alert">
-            {fieldErrors.deadline_at}
-          </p>
-        )}
+        <AnimatePresence>
+          {fieldErrors.deadline_at && (
+            <motion.p {...scaleIn} role="alert" className="mt-1 text-xs text-red-600">
+              {fieldErrors.deadline_at}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* リンク（任意） */}
@@ -266,17 +274,19 @@ export default function DeadlineForm(props: Props) {
           placeholder="https://example.com/job"
           maxLength={2048}
           disabled={isSubmitting}
-          className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+          className={`mt-1 w-full rounded-lg border px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 ${
             fieldErrors.link
               ? "border-red-400 bg-red-50"
               : "border-slate-300 bg-white"
           }`}
         />
-        {fieldErrors.link && (
-          <p className="mt-1 text-xs text-red-600" role="alert">
-            {fieldErrors.link}
-          </p>
-        )}
+        <AnimatePresence>
+          {fieldErrors.link && (
+            <motion.p {...scaleIn} role="alert" className="mt-1 text-xs text-red-600">
+              {fieldErrors.link}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* メモ（任意） */}
@@ -296,17 +306,19 @@ export default function DeadlineForm(props: Props) {
           maxLength={1000}
           rows={3}
           disabled={isSubmitting}
-          className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+          className={`mt-1 w-full rounded-lg border px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 ${
             fieldErrors.memo
               ? "border-red-400 bg-red-50"
               : "border-slate-300 bg-white"
           }`}
         />
-        {fieldErrors.memo && (
-          <p className="mt-1 text-xs text-red-600" role="alert">
-            {fieldErrors.memo}
-          </p>
-        )}
+        <AnimatePresence>
+          {fieldErrors.memo && (
+            <motion.p {...scaleIn} role="alert" className="mt-1 text-xs text-red-600">
+              {fieldErrors.memo}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* 送信ボタン */}
@@ -314,7 +326,7 @@ export default function DeadlineForm(props: Props) {
         <button
           type="submit"
           disabled={isSubmitting || isLimitExceeded}
-          className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSubmitting
             ? "保存中..."

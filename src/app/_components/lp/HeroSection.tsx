@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { fadeUp, stagger } from "@/lib/motion";
 import { LP_CONTENT } from "./content";
 import { LeadCaptureDialog } from "./LeadCaptureDialog";
 
@@ -10,28 +14,41 @@ export function HeroSection() {
 
   return (
     <section className="mx-auto max-w-5xl px-6 py-24 text-center">
-      <h1
-        className="mx-auto max-w-2xl text-4xl font-bold leading-tight sm:text-5xl"
-        style={{
-          color: "#222222",
-          lineHeight: 1.1,
-          letterSpacing: "-0.02em",
-        }}
+      <motion.div
+        initial="initial"
+        animate="animate"
+        variants={stagger}
+        className="flex flex-col items-center"
       >
-        {hero.heading}
-      </h1>
-      <p
-        className="mx-auto mt-6 max-w-xl text-base leading-relaxed"
-        style={{ color: "#6a6a6a", fontWeight: 500 }}
-      >
-        {hero.subCopy}
-      </p>
-      <div className="mt-10">
-        <LeadCaptureDialog label={hero.ctaLabel} ctaLocation="hero" />
-      </div>
-      <p className="mt-4 text-sm" style={{ color: "#6a6a6a" }}>
-        {hero.note}
-      </p>
+        <motion.h1
+          variants={fadeUp}
+          transition={fadeUp.transition}
+          className="mx-auto max-w-2xl text-5xl font-black tracking-tighter text-gray-900 sm:text-7xl"
+        >
+          {hero.heading}
+        </motion.h1>
+        <motion.p
+          variants={fadeUp}
+          transition={fadeUp.transition}
+          className="mx-auto mt-6 max-w-xl text-base font-medium leading-relaxed text-gray-500"
+        >
+          {hero.subCopy}
+        </motion.p>
+        <motion.div
+          variants={fadeUp}
+          transition={fadeUp.transition}
+          className="mt-10"
+        >
+          <LeadCaptureDialog label={hero.ctaLabel} ctaLocation="hero" />
+        </motion.div>
+        <motion.p
+          variants={fadeUp}
+          transition={fadeUp.transition}
+          className="mt-4 text-sm text-gray-500"
+        >
+          {hero.note}
+        </motion.p>
+      </motion.div>
     </section>
   );
 }

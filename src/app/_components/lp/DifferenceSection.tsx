@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { fadeUp } from "@/lib/motion";
 import { LP_CONTENT } from "./content";
 
 /**
@@ -7,49 +11,48 @@ export function DifferenceSection() {
   const { difference } = LP_CONTENT;
 
   return (
-    <section className="py-20" style={{ backgroundColor: "#ffffff" }}>
+    <section className="bg-white py-20">
       <div className="mx-auto max-w-5xl px-6 text-center">
-        <h2
-          className="text-3xl font-bold"
-          style={{
-            color: "#222222",
-            lineHeight: 1.2,
-            letterSpacing: "-0.02em",
-          }}
+        <motion.h2
+          initial={fadeUp.initial}
+          whileInView={fadeUp.animate}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={fadeUp.transition}
+          className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl"
         >
           {difference.heading}
-        </h2>
-        <p
-          className="mx-auto mt-4 max-w-lg text-base leading-relaxed"
-          style={{ color: "#6a6a6a", fontWeight: 500 }}
+        </motion.h2>
+        <motion.p
+          initial={fadeUp.initial}
+          whileInView={fadeUp.animate}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ ...fadeUp.transition, delay: 0.06 }}
+          className="mx-auto mt-4 max-w-lg text-base font-medium leading-relaxed text-gray-500"
         >
           {difference.body}
-        </p>
+        </motion.p>
         {/* 価値ループ */}
-        <div
+        <motion.div
+          initial={fadeUp.initial}
+          whileInView={fadeUp.animate}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ ...fadeUp.transition, delay: 0.12 }}
           className="mt-10 flex flex-wrap items-center justify-center gap-2"
           aria-label="価値ループ"
         >
           {difference.loop.map((step, i) => (
             <div key={step} className="flex items-center gap-2">
-              <span
-                className="rounded-[20px] px-4 py-1.5 text-sm font-medium"
-                style={{
-                  backgroundColor: "#ffffff",
-                  border: "1px solid #dddddd",
-                  color: "#222222",
-                }}
-              >
+              <span className="rounded-full border border-gray-200 bg-white px-4 py-1.5 text-sm font-medium text-gray-900">
                 {step}
               </span>
               {i < difference.loop.length - 1 && (
-                <span style={{ color: "#ff385c", fontWeight: 600 }} aria-hidden="true">
+                <span className="font-semibold text-indigo-600" aria-hidden="true">
                   →
                 </span>
               )}
             </div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

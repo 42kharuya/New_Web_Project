@@ -20,12 +20,12 @@ export default async function RootLayout({
 
   return (
     <html lang="ja">
-      <body className="flex min-h-screen flex-col">
+      <body className="font-sans flex min-h-screen flex-col">
         {/* GTM スクリプト: body 先頭に配置（noscript フォールバック含む） */}
         <GtmScript />
         {session && <ConditionalHeader email={session.email} />}
         <div className="flex-1">{children}</div>
-        <footer className="border-t border-slate-200 bg-slate-50 py-4 text-center text-xs text-slate-500">
+        <footer className="border-t border-indigo-100 bg-gray-50 py-4 text-center text-xs text-slate-500">
           <nav className="space-x-4">
             <Link href="/terms" className="hover:underline">
               利用規約
