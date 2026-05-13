@@ -1,7 +1,6 @@
 
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getSession } from "@/features/auth/session";
+import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import DeadlineList, { type DeadlineItem } from "./DeadlineList";
 import { FREE_ITEM_LIMIT, isProUser } from "@/features/deadlines/gate";
@@ -15,11 +14,7 @@ import { getUrgencyLevel } from "@/features/deadlines/format";
  * - ログイン済 → Prisma で deadline_at 昇順取得し DeadlineList に渡す
  */
 export default async function DashboardPage() {
-  // 1. 認証確認（引数なし = Server Component 用パス）
-  const session = await getSession();
-  if (!session) {
-    redirect("/login");
-  }
+  const session = await requireSession();
 
   // 2. ダッシュボード表示の計測（重複は集計側で吸収する設計・エラーはキャッチ済みなのでawait可）
   await trackEvent({ name: "dashboard_viewed", userId: session.sub });
