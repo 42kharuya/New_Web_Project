@@ -1,7 +1,8 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getSession } from "@/features/auth/session";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import DeadlineEditForm from "./DeadlineEditForm";
+import DeadlineForm from "@/app/deadline/new/DeadlineForm";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -53,7 +54,8 @@ export default async function DeadlineEditPage({ params }: Props) {
       <p className="mt-1 text-sm text-slate-500">
         <span className="text-red-500">*</span> は必須項目です
       </p>
-      <DeadlineEditForm
+      <DeadlineForm
+        mode="edit"
         id={item.id}
         initialCompanyName={item.companyName}
         initialKind={item.kind}

@@ -6,26 +6,47 @@ import Link from "next/link";
 import { KIND_LABEL } from "@/features/deadlines/format";
 
 type FieldErrors = Record<string, string>;
-
 type Status = "idle" | "submitting" | "error" | "limit_exceeded";
 
 const KIND_OPTIONS = Object.entries(KIND_LABEL) as [string, string][];
 
-export default function DeadlineForm() {
+type CreateProps = { mode: "create" };
+type EditProps = {
+  mode: "edit";
+  id: string;
+  initialCompanyName: string;
+  initialKind: string;
+  initialDeadlineAt: string;
+  initialLink: string;
+  initialMemo: string;
+};
+
+type Props = CreateProps | EditProps;
+
+export default function DeadlineForm(props: Props) {
   const router = useRouter();
 
-  const [companyName, setCompanyName] = useState("");
-  const [kind, setKind] = useState("");
-  const [deadlineAt, setDeadlineAt] = useState("");
-  const [link, setLink] = useState("");
-  const [memo, setMemo] = useState("");
+  const initial =
+    props.mode === "edit"
+      ? {
+          companyName: props.initialCompanyName,
+          kind: props.initialKind,
+          deadlineAt: props.initialDeadlineAt,
+          link: props.initialLink,
+          memo: props.initialMemo,
+        }
+      : { companyName: "", kind: "", deadlineAt: "", link: "", memo: "" };
+
+  const [companyName, setCompanyName] = useState(initial.companyName);
+  const [kind, setKind] = useState(initial.kind);
+  const [deadlineAt, setDeadlineAt] = useState(initial.deadlineAt);
+  const [link, setLink] = useState(initial.link);
+  const [memo, setMemo] = useState(initial.memo);
 
   const [status, setStatus] = useState<Status>("idle");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [globalError, setGlobalError] = useState("");
-  const [limitExceeded, setLimitExceeded] = useState(false);
 
-  /** クライアント側の必須チェック（送信前バリデーション） */
   function validate(): FieldErrors {
     const errs: FieldErrors = {};
     if (!companyName.trim()) errs.company_name = "企業名は必須です";
@@ -37,9 +58,7 @@ export default function DeadlineForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setGlobalError("");
-    setLimitExceeded(false);
 
-    // 1. クライアント側バリデーション
     const clientErrors = validate();
     if (Object.keys(clientErrors).length > 0) {
       setFieldErrors(clientErrors);
@@ -47,19 +66,20 @@ export default function DeadlineForm() {
       return;
     }
     setFieldErrors({});
-
-    // 2. API 送信
     setStatus("submitting");
 
+    const url =
+      props.mode === "edit" ? `/api/deadlines/${props.id}` : "/api/deadlines";
+    const method = props.mode === "edit" ? "PATCH" : "POST";
+
     try {
-      const res = await fetch("/api/deadlines", {
-        method: "POST",
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           company_name: companyName.trim(),
           kind,
           // datetime-local は TZ なしで返るため +09:00 を付与して JST を明示する
-          // （サーバーが UTC 環境でも正しい時刻で保存される）
           deadline_at: deadlineAt ? deadlineAt + "+09:00" : "",
           link: link.trim() || undefined,
           memo: memo.trim() || undefined,
@@ -67,30 +87,30 @@ export default function DeadlineForm() {
       });
 
       if (res.ok) {
-        // 作成成功 → ダッシュボードへ
         router.push("/dashboard");
         return;
       }
 
-      // エラー処理
       const data = await res.json().catch(() => ({}));
 
       if (res.status === 400 && Array.isArray(data.details)) {
-        // フィールドエラーをマップ展開
         const errs: FieldErrors = {};
         for (const e of data.details as { field: string; message: string }[]) {
           errs[e.field] = e.message;
         }
         setFieldErrors(errs);
         setStatus("error");
-      } else if (res.status === 403 && data.code === "FREE_LIMIT_EXCEEDED") {
-        setLimitExceeded(true);
+      } else if (
+        props.mode === "create" &&
+        res.status === 403 &&
+        data.code === "FREE_LIMIT_EXCEEDED"
+      ) {
         setStatus("limit_exceeded");
+      } else if (props.mode === "edit" && res.status === 404) {
+        setGlobalError("締切アイテムが見つかりません。");
+        setStatus("error");
       } else if (res.status === 403) {
-        setGlobalError(
-          data.error ??
-            "この操作は許可されていません。",
-        );
+        setGlobalError(data.error ?? "この操作は許可されていません。");
         setStatus("error");
       } else {
         setGlobalError(data.error ?? "保存に失敗しました。もう一度お試しください。");
@@ -107,8 +127,8 @@ export default function DeadlineForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-6">
-      {/* Free 枠上限エラー（/billing への誘導リンク付き） */}
-      {limitExceeded && (
+      {/* Free 枠上限エラー（create モードのみ） */}
+      {isLimitExceeded && (
         <div
           role="alert"
           className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
@@ -296,7 +316,13 @@ export default function DeadlineForm() {
           disabled={isSubmitting || isLimitExceeded}
           className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isSubmitting ? "保存中..." : isLimitExceeded ? "上限に達しています" : "作成する"}
+          {isSubmitting
+            ? "保存中..."
+            : isLimitExceeded
+              ? "上限に達しています"
+              : props.mode === "edit"
+                ? "保存する"
+                : "作成する"}
         </button>
         <Link
           href="/dashboard"

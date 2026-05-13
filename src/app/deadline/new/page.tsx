@@ -7,7 +7,7 @@ export default function NewDeadlinePage() {
       <p className="mt-1 text-sm text-slate-500">
         <span className="text-red-500">*</span> は必須項目です
       </p>
-      <DeadlineForm />
+      <DeadlineForm mode="create" />
     </main>
   );
 }
