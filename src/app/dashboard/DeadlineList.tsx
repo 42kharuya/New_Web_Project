@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   formatDeadline,
   getUrgencyLevel,
@@ -138,7 +139,15 @@ export default function DeadlineList({ initialItems }: Props) {
         </div>
       )}
 
-      <ul className="space-y-3">
+      <motion.ul
+        className="space-y-3"
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: {},
+          visible: { transition: { staggerChildren: 0.07 } },
+        }}
+      >
         {items.map((item) => {
           const urgency = getUrgencyLevel(item.deadlineAt);
           const isUpdating = updatingId === item.id;
@@ -146,8 +155,13 @@ export default function DeadlineList({ initialItems }: Props) {
           const isConfirming = confirmDeleteId === item.id;
 
           return (
-            <li
+            <motion.li
               key={item.id}
+              variants={{
+                hidden: { opacity: 0, y: 12 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" } },
+              }}
+              layout
               className={`rounded-lg px-4 py-3 shadow-sm transition-opacity ${URGENCY_CLASS[urgency]} ${isUpdating || isDeleting ? "opacity-60" : ""} ${isConfirming ? "ring-1 ring-red-300" : ""}`}
             >
               <div className="flex items-start justify-between gap-3">
@@ -254,10 +268,10 @@ export default function DeadlineList({ initialItems }: Props) {
                 )}
                 </div>
               </div>
-            </li>
+            </motion.li>
           );
         })}
-      </ul>
+      </motion.ul>
     </div>
   );
 }
