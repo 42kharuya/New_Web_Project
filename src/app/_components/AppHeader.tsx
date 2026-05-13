@@ -20,7 +20,7 @@ export function AppHeader({ email }: AppHeaderProps) {
 
   return (
     <motion.header
-      className="border-b border-indigo-100 bg-white"
+      className="sticky top-0 z-20 border-b border-[var(--rule)] bg-[var(--paper)]/90 backdrop-blur-md"
       initial={fadeUp.initial}
       animate={fadeUp.animate}
       transition={fadeUp.transition}
@@ -28,20 +28,21 @@ export function AppHeader({ email }: AppHeaderProps) {
       <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-3">
         <Link
           href="/dashboard"
-          className="text-lg font-black text-indigo-600 hover:text-indigo-700 transition-colors"
+          className="flex items-center gap-0.5 transition-opacity hover:opacity-80"
         >
-          〆トラ
+          <span className="text-lg font-black text-brand">〆</span>
+          <span className="text-lg font-black text-[var(--ink)]">トラ</span>
         </Link>
         <div className="flex items-center gap-3">
           <span
-            className="text-sm text-slate-600 hidden sm:block"
+            className="hidden text-sm text-[var(--ink-3)] sm:block"
             title={email}
           >
             {displayEmail}
           </span>
           <button
             onClick={handleLogout}
-            className="min-h-[44px] min-w-[44px] rounded-md border border-indigo-200 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
+            className="rounded-lg border border-[var(--rule)] px-4 py-2 text-sm font-medium text-[var(--ink-2)] transition-colors hover:bg-[var(--paper-2)]"
           >
             ログアウト
           </button>
