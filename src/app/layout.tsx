@@ -25,7 +25,7 @@ export default async function RootLayout({
         <GtmScript />
         {session && <ConditionalHeader email={session.email} />}
         <div className="flex-1">{children}</div>
-        <footer className="border-t border-indigo-100 bg-gray-50 py-4 text-center text-xs text-slate-500">
+        <footer className="border-t border-[var(--rule)] bg-[var(--paper-2)] py-4 text-center text-xs text-[var(--ink-4)]">
           <nav className="space-x-4">
             <Link href="/terms" className="hover:underline">
               利用規約
