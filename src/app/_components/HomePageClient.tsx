@@ -1,427 +1,848 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { fadeUp } from "@/lib/motion";
-import { FREE_FEATURES, PRO_FEATURES } from "@/config/plans";
+import { PRO_PRICE_JPY } from "@/config/plans";
+import "@/app/lp.css";
 
-const PROBLEMS = [
-  { icon: "📭", text: "気づいたら締切が過ぎていた" },
-  { icon: "🗂️", text: "複数企業の締切を覚えきれない" },
-  { icon: "😓", text: "Notion に書いたが更新が止まった" },
+const MARQUEE_ITEMS: [string, string][] = [
+  ["エントリーシート", "23:59"],
+  ["説明会", "5月14日"],
+  ["面接", "一次／二次／最終"],
+  ["本日締切", "TODAY"],
+  ["72時間前", "NOTIFY"],
+  ["寝落ち、なし", "NEVER MISS"],
 ];
 
-const HOW_STEPS = [
-  { num: "01", title: "締切を登録する", desc: "企業名・種別・締切日時をサッと入力。リンクやメモも保存できます。" },
-  { num: "02", title: "通知が届く", desc: "締切の 72時間前・24時間前・3時間前にメールで通知します。" },
-  { num: "03", title: "出し忘れゼロへ", desc: "通知を受け取り、ステータスを更新。就活の締切を確実に守れます。" },
+const FREE_LIST = [
+  "締切アイテム10件まで",
+  "締切24時間前のメール通知",
+  "4階調の緊急度 × 4種類の選考タグ",
+  "ステータス管理",
+  "マジックリンク認証（パスワード不要）",
 ];
+
+const PRO_LIST = [
+  "締切アイテム 無制限",
+  "締切 72 / 24 / 3時間前の通知",
+  "4階調の緊急度 × 4種類の選考タグ",
+  "FREE の全機能",
+];
+
+const URG_CARDS = [
+  { cls: "overdue", off: 0,   label: "● Overdue ／ 期限切れ", title: "取り逃した。",  desc: "過ぎた時間はゼロにできない。だから〆トラは、過ぎる前に止める設計。", n: "−02h", u: "過ぎた" },
+  { cls: "today",   off: 32,  label: "● Today ／ 当日",       title: "今日が、勝負。", desc: "濃いオレンジで、視界の中心に。寝落ちする前に、確実に呼び戻す。",     n: "07h",  u: "あと" },
+  { cls: "soon",    off: 160, label: "● Soon ／ 3日以内",     title: "視界の端へ。",  desc: "準備期間。落ち着いた黄色で、近づいていることだけを知らせる。",       n: "2d",   u: "あと" },
+  { cls: "normal",  off: 260, label: "● Normal ／ 通常",      title: "まだ、余裕。",  desc: "ブランドの紺で、リストの背景に。今日は、別のことに集中していい。",   n: "11d",  u: "あと" },
+];
+
+const pad = (n: number) => String(n).padStart(2, "0");
 
 export function HomePageClient() {
+  const navRef        = useRef<HTMLElement>(null);
+  const phoneRef      = useRef<HTMLDivElement>(null);
+  const heroMarkRef   = useRef<HTMLSpanElement>(null);
+  const heroRightRef  = useRef<HTMLDivElement>(null);
+  const hourRef       = useRef<HTMLSpanElement>(null);
+  const minRef        = useRef<HTMLSpanElement>(null);
+  const secRef        = useRef<HTMLSpanElement>(null);
+  const b1TimerRef    = useRef<HTMLDivElement>(null);
+  const ctaMarkRef    = useRef<HTMLSpanElement>(null);
+  const ctaSectionRef = useRef<HTMLElement>(null);
+  const stat82Ref     = useRef<HTMLDivElement>(null);
+
+  const [email,     setEmail]     = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [sending,   setSending]   = useState(false);
+  const [errMsg,    setErrMsg]    = useState("");
+
+  /* ── nav scroll shadow ── */
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const onScroll = () => nav.classList.toggle("scrolled", window.scrollY > 8);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  /* ── IntersectionObserver reveal for [data-reveal] ── */
+  useEffect(() => {
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) { e.target.classList.add("in-view"); io.unobserve(e.target); }
+        });
+      },
+      { threshold: 0.18, rootMargin: "0px 0px -8% 0px" },
+    );
+    document.querySelectorAll("[data-reveal]").forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
+  /* ── phone countdown ── */
+  useEffect(() => {
+    let remaining = 7 * 3600 + 17 * 60 + 42;
+    const tick = () => {
+      const h = Math.floor(remaining / 3600);
+      const m = Math.floor((remaining % 3600) / 60);
+      const s = remaining % 60;
+      if (hourRef.current) hourRef.current.textContent = pad(h);
+      if (minRef.current)  minRef.current.textContent  = pad(m);
+      if (secRef.current)  secRef.current.textContent  = pad(s);
+      remaining = Math.max(0, remaining - 1);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  /* ── bento b-1 timer d/h alternating ── */
+  useEffect(() => {
+    const el = b1TimerRef.current;
+    if (!el) return;
+    let big = 7, isDays = true;
+    const id = setInterval(() => {
+      if (isDays) {
+        big = (big % 14) + 1;
+        el.innerHTML = `${pad(big)}<span class="unit">d</span>`;
+      } else {
+        big = Math.max(1, (big + 3) % 24);
+        el.innerHTML = `${pad(big)}<span class="unit">h</span>`;
+      }
+      isDays = !isDays;
+    }, 2200);
+    return () => clearInterval(id);
+  }, []);
+
+  /* ── hero parallax ── */
+  useEffect(() => {
+    const phone    = phoneRef.current;
+    const heroMark = heroMarkRef.current;
+    const heroRight = heroRightRef.current;
+    if (!heroRight || !phone) return;
+
+    let raf: number | null = null;
+    let targetX = 0, targetY = 0, curX = 0, curY = 0;
+
+    const onMove = (e: MouseEvent) => {
+      const r = heroRight.getBoundingClientRect();
+      targetX = (e.clientX - (r.left + r.width  / 2)) / r.width;
+      targetY = (e.clientY - (r.top  + r.height / 2)) / r.height;
+      if (!raf) raf = requestAnimationFrame(loop);
+    };
+    const onLeave = () => { targetX = targetY = 0; };
+
+    function loop() {
+      curX += (targetX - curX) * 0.08;
+      curY += (targetY - curY) * 0.08;
+      phone!.style.transform = `rotate(${-3 + curX * 4}deg) translate(${curX * 12}px, ${curY * 10}px)`;
+      if (heroMark) heroMark.style.transform = `rotate(${-6 + curX * 2}deg) translate(${curX * -22}px, ${curY * -16}px)`;
+      if (Math.abs(targetX - curX) > 0.001 || Math.abs(targetY - curY) > 0.001) {
+        raf = requestAnimationFrame(loop);
+      } else {
+        raf = null;
+      }
+    }
+
+    heroRight.addEventListener("mousemove", onMove);
+    heroRight.addEventListener("mouseleave", onLeave);
+    return () => {
+      heroRight.removeEventListener("mousemove", onMove);
+      heroRight.removeEventListener("mouseleave", onLeave);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  /* ── magnet buttons ── */
+  useEffect(() => {
+    type Handler = { btn: HTMLElement; move: (e: MouseEvent) => void; leave: () => void };
+    const handlers: Handler[] = [];
+
+    document.querySelectorAll<HTMLElement>(".lp-btn-magnet").forEach((btn) => {
+      const move = (e: MouseEvent) => {
+        const r = btn.getBoundingClientRect();
+        const x = e.clientX - (r.left + r.width  / 2);
+        const y = e.clientY - (r.top  + r.height / 2);
+        btn.style.transform = `translate(${x * 0.18}px, ${y * 0.22}px)`;
+      };
+      const leave = () => { btn.style.transform = ""; };
+      btn.addEventListener("mousemove", move);
+      btn.addEventListener("mouseleave", leave);
+      handlers.push({ btn, move, leave });
+    });
+
+    return () => handlers.forEach(({ btn, move, leave }) => {
+      btn.removeEventListener("mousemove", move);
+      btn.removeEventListener("mouseleave", leave);
+    });
+  }, []);
+
+  /* ── CTA mark scroll drift ── */
+  useEffect(() => {
+    const ctaMark = ctaMarkRef.current;
+    const cta     = ctaSectionRef.current;
+    if (!ctaMark || !cta) return;
+
+    const onScroll = () => {
+      const r  = cta.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const progress = Math.max(0, Math.min(1, (vh - r.top) / (vh + r.height)));
+      ctaMark.style.transform = `rotate(${-10 + progress * 20}deg) scale(${0.92 + progress * 0.16})`;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  /* ── stats counter animate (82%) ── */
+  useEffect(() => {
+    const numEl = stat82Ref.current;
+    if (!numEl) return;
+    const row = numEl.closest(".lp-stat-row") as HTMLElement | null;
+    if (!row) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return;
+          const dur = 1200, t0 = performance.now();
+          function step(t: number) {
+            const p = Math.min(1, (t - t0) / dur);
+            const v = Math.floor((1 - Math.pow(1 - p, 3)) * 82);
+            numEl!.innerHTML = `${v}<span class="pct">%</span>`;
+            if (p < 1) requestAnimationFrame(step);
+          }
+          requestAnimationFrame(step);
+          io.unobserve(row!);
+        });
+      },
+      { threshold: 0.5 },
+    );
+    io.observe(row);
+    return () => io.disconnect();
+  }, []);
+
+  /* ── smooth anchor scroll (offset for fixed nav) ── */
+  useEffect(() => {
+    type H = { el: HTMLAnchorElement; fn: (e: Event) => void };
+    const handlers: H[] = [];
+
+    document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) => {
+      const fn = (e: Event) => {
+        const id = a.getAttribute("href")?.slice(1);
+        if (!id) return;
+        const target = document.getElementById(id);
+        if (!target) return;
+        e.preventDefault();
+        window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 72, behavior: "smooth" });
+      };
+      a.addEventListener("click", fn);
+      handlers.push({ el: a, fn });
+    });
+
+    return () => handlers.forEach(({ el, fn }) => el.removeEventListener("click", fn));
+  }, []);
+
+  /* ── CTA form submit ── */
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setSending(true);
+    setErrMsg("");
+    try {
+      const res = await fetch("/api/auth/magic-link", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        setErrMsg(data.error ?? "エラーが発生しました。");
+      }
+    } catch {
+      setErrMsg("ネットワークエラーが発生しました。");
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[var(--paper)] font-sans">
-      {/* ── ナビゲーション ── */}
-      <header
-        className="sticky top-0 z-10 border-b border-[var(--rule)]"
-        style={{
-          background: "color-mix(in oklab, var(--paper) 92%, transparent)",
-          backdropFilter: "blur(10px)",
-        }}
-      >
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-2" style={{ fontWeight: 800, letterSpacing: "-0.02em" }}>
-            <span
-              className="brand-seal relative inline-flex h-[28px] w-[28px] items-center justify-center rounded-[8px] bg-[var(--ink)] text-white"
-              style={{
-                fontFamily: '"Noto Sans JP", serif',
-                fontWeight: 900,
-                fontSize: 16,
-                transform: "rotate(-4deg)",
-              }}
-              aria-hidden="true"
-            >
-              〆
-            </span>
-            <span className="text-[16px] text-[var(--ink)]">トラ</span>
+    <>
+      {/* ─── NAV ─── */}
+      <nav ref={navRef} className="lp-nav" id="nav">
+        <a href="#top" className="lp-nav-brand">
+          <span className="lp-nav-seal">〆</span>
+          <span>
+            SHIMETRA
+            <span style={{ color: "var(--ink-3)", marginLeft: 6, fontWeight: 500 }}>／〆トラ</span>
+          </span>
+        </a>
+        <div className="lp-nav-links">
+          <a href="#problem">課題</a>
+          <a href="#how">使い方</a>
+          <a href="#features">機能</a>
+          <a href="#voices">声</a>
+          <a href="#pricing">料金</a>
+        </div>
+        <a href="#cta" className="lp-nav-cta">
+          無料ではじめる <span className="arrow">→</span>
+        </a>
+      </nav>
+
+      {/* ─── HERO ─── */}
+      <header className="lp-hero" id="top">
+        <div className="lp-hero-grid">
+
+          {/* 左: コピー */}
+          <div className="lp-hero-left">
+            <div className="lp-eyebrow">
+              <span className="dot" />
+              2026 新卒 / 第二新卒 のための締切ノート
+            </div>
+
+            <h1 className="lp-hero-title">
+              <span className="line"><span className="word">出さなきゃ、を</span></span>
+              <span className="line"><span className="word"><em>出した</em>に。</span></span>
+              <span className="line"><span className="word"><span className="accent">〆トラ。</span></span></span>
+            </h1>
+
+            <p className="lp-hero-sub">
+              ES・説明会・面接の締切を一箇所に。<strong>72 / 24 / 3 時間前</strong>に、
+              〆トラがメールでそっと教えてくれる。スマホに余計なアプリは要らない、メール一通だけの安心。
+            </p>
+
+            <div className="lp-hero-cta-row">
+              <a href="#cta" className="lp-btn-magnet">
+                無料ではじめる <span className="arrow">→</span>
+              </a>
+              <a href="#how" className="lp-btn-ghost">仕組みを見る</a>
+            </div>
+
+            <div className="lp-hero-bullets">
+              <span className="lp-hero-bullet">アプリDL不要</span>
+              <span className="lp-hero-bullet">マジックリンク認証</span>
+              <span className="lp-hero-bullet">10件まで無料・広告なし</span>
+            </div>
           </div>
-          <Link
-            href="/login"
-            className="rounded-[10px] bg-[var(--ink)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand"
-          >
-            ログイン / 無料登録
-          </Link>
+
+          {/* 右: フォンモックアップ */}
+          <div className="lp-hero-right" ref={heroRightRef}>
+            <span className="lp-hero-mark" ref={heroMarkRef} aria-hidden="true">〆</span>
+
+            <div className="lp-hero-chip chip-1">
+              <span className="dot" />
+              <div>
+                <strong>残り 23:59:42</strong>
+                <span>ES ・ Recruit Holdings</span>
+              </div>
+            </div>
+
+            <div className="lp-hero-chip chip-3">
+              <span className="dot" />
+              <div>
+                <strong>提出完了</strong>
+                <span>freee ・ ES</span>
+              </div>
+            </div>
+
+            <div className="lp-hero-chip chip-2">
+              <span className="dot" />
+              <div>
+                <strong>メール通知 → 72h前</strong>
+                <span>メルカリ ・ 面接</span>
+              </div>
+            </div>
+
+            <div className="lp-phone" ref={phoneRef}>
+              <div className="lp-phone-notch" />
+              <div className="lp-phone-status">
+                <span>9:41</span>
+                <span className="right">●●●●● 5G ▮▮</span>
+              </div>
+              <div className="lp-phone-screen">
+                <div className="lp-phone-header">
+                  <div className="lp-phone-brand">
+                    <span className="seal">〆</span>〆トラ
+                  </div>
+                  <div className="lp-phone-icons">
+                    <span className="lp-phone-iconbtn">⌖<span className="pin">3</span></span>
+                    <span className="lp-phone-iconbtn">⚙</span>
+                  </div>
+                </div>
+                <div className="lp-phone-body">
+                  <div className="lp-phone-greeting">
+                    こんにちは、<span className="accent">悠真</span> さん。
+                  </div>
+                  <div className="lp-phone-hero">
+                    <div className="lbl">次の〆切まで</div>
+                    <div className="co">Recruit Holdings<span className="tag">ES</span></div>
+                    <div className="timer">
+                      <span className="seg"    ref={hourRef}>07</span><span className="unit">h</span>
+                      <span className="seg sm" ref={minRef}>17</span><span className="unit">m</span>
+                      <span className="seg sm" ref={secRef}>42</span><span className="unit">s</span>
+                    </div>
+                    <div className="bar"><div /></div>
+                  </div>
+                  <div className="lp-phone-list">
+                    <div className="lp-phone-item u-today">
+                      <span className="strip" />
+                      <span className="ring">7h</span>
+                      <div className="info">
+                        <span className="kind">ES</span>
+                        <div className="co">Recruit Holdings</div>
+                        <div className="meta">本日 17:30 まで</div>
+                      </div>
+                      <span className="pill">未対応</span>
+                    </div>
+                    <div className="lp-phone-item u-soon">
+                      <span className="strip" />
+                      <span className="ring">1d</span>
+                      <div className="info">
+                        <span className="kind k-interview">面接</span>
+                        <div className="co">メルカリ</div>
+                        <div className="meta">5/14 14:00</div>
+                      </div>
+                      <span className="pill">未対応</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="lp-scroll-cue">
+          SCROLL<span className="line" />
         </div>
       </header>
 
-      <main>
-        {/* ── Hero ── */}
-        <section className="mx-auto max-w-5xl px-6 py-20 lg:py-28">
-          <div className="lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center">
-            {/* 左: テキスト */}
-            <motion.div
-              initial={fadeUp.initial}
-              animate={fadeUp.animate}
-              transition={fadeUp.transition}
-              className="stagger"
-            >
-              {/* 大きなシール */}
-              <div
-                className="big-seal relative mb-8 inline-flex h-[80px] w-[80px] items-center justify-center rounded-[20px] bg-[var(--ink)] text-white lg:h-[96px] lg:w-[96px] lg:rounded-[24px]"
-                style={{
-                  fontFamily: '"Noto Sans JP", serif',
-                  fontWeight: 900,
-                  fontSize: 48,
-                  letterSpacing: "-0.04em",
-                  transform: "rotate(-3deg)",
-                }}
-              >
-                〆
+      {/* ─── MARQUEE ─── */}
+      <section className="lp-marquee" aria-hidden="true">
+        <div className="lp-marquee-track">
+          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map(([big, small], i) => (
+            <span key={i} className="lp-marquee-item">
+              <span className="sep">〆</span>
+              <span>{big}</span>
+              <span className="small">{small}</span>
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── PROBLEM ─── */}
+      <section className="lp-problem" id="problem">
+        <div className="lp-problem-grid">
+          <div className="lp-problem-head" data-reveal="">
+            <div className="lp-eyebrow"><span className="dot" />就活で、いちばん怖いこと</div>
+            <h2>
+              「<span className="strike">うっかり</span>」で、<br />
+              志望企業を<br />
+              逃してませんか。
+            </h2>
+            <p>
+              志望度の高い企業ほど、ESも面接も日程が密集する。Excel・カレンダー・メール・
+              各社のマイページ、情報源がバラけるほど、いちばん大事な一行が抜け落ちる。
+            </p>
+          </div>
+
+          <div className="lp-stats-stack">
+            <div className="lp-stat-row" data-reveal="">
+              <div className="lp-stat-num" ref={stat82Ref}>
+                82<span className="pct">%</span>
               </div>
-
-              <h1
-                className="text-[40px] font-black text-[var(--ink)] leading-tight sm:text-[52px] lg:text-[56px]"
-                style={{ letterSpacing: "-0.035em" }}
-              >
-                締切ミスを、<br />
-                <span style={{ color: "var(--brand)" }}>もうしない。</span>
-              </h1>
-              <p className="mt-5 max-w-md text-[var(--ink-2)] leading-relaxed lg:text-lg">
-                ES・説明会・面接の締切を一元管理。<br />
-                締切前にメールで通知し、就活の出し忘れを防ぎます。
+              <p>
+                就活生が「締切を忘れて出せなかった経験がある／焦った経験がある」と回答。
+                <span className="src">SOURCE — 〆トラ ユーザーアンケート n=812</span>
               </p>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  href="/login"
-                  className="rounded-[14px] bg-[var(--ink)] px-7 py-3.5 text-base font-bold text-[var(--paper)] transition-all hover:bg-brand hover:-translate-y-px"
-                  style={{ boxShadow: "0 8px 24px -8px rgba(15,13,26,0.4)" }}
-                >
-                  無料ではじめる
-                </Link>
-                <Link
-                  href="/login"
-                  className="rounded-[14px] border border-[var(--rule)] bg-[var(--card)] px-7 py-3.5 text-base font-semibold text-[var(--ink-2)] transition-all hover:border-[var(--ink-3)] hover:-translate-y-px"
-                >
-                  ログインする
-                </Link>
-              </div>
-              <p className="mt-4 text-sm text-[var(--ink-4)]">
-                クレジットカード不要 · 10件まで無料
+            </div>
+            <div className="lp-stat-row" data-reveal="">
+              <div className="lp-stat-num">3.4<span className="pct">件</span></div>
+              <p>
+                1人あたり、平均で同時並行して動いている選考の数。ピーク時は 10 件超。
+                <span className="src">SOURCE — 22-24卒 ヒアリング</span>
               </p>
-            </motion.div>
-
-            {/* 右: アプリプレビュー（デスクトップのみ） */}
-            <div className="hidden lg:block">
-              <AppPreview />
+            </div>
+            <div className="lp-stat-row" data-reveal="">
+              <div className="lp-stat-num">23<span className="pct">:59</span></div>
+              <p>
+                ES 締切の 6 割が「当日 23:59」設定。寝落ち1回が、就活ひとつを終わらせる。
+                <span className="src">SOURCE — 主要 50 社 採用ページ調査</span>
+              </p>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ── こんな経験 ── */}
-        <section
-          className="border-y border-[var(--rule)] py-16 lg:py-20"
-          style={{ background: "var(--paper-2)" }}
-        >
-          <motion.div
-            initial={fadeUp.initial}
-            whileInView={fadeUp.animate}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={fadeUp.transition}
-            className="mx-auto max-w-5xl px-6"
-          >
-            <p
-              className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-4)] text-center"
-            >
-              THE PROBLEM
-            </p>
-            <h2
-              className="mt-3 text-center text-[28px] font-black text-[var(--ink)] lg:text-[34px]"
-              style={{ letterSpacing: "-0.025em" }}
-            >
-              こんな経験、ありませんか？
-            </h2>
-            <div className="mt-10 grid gap-4 sm:grid-cols-3">
-              {PROBLEMS.map(({ icon, text }) => (
-                <div
-                  key={text}
-                  className="rounded-[var(--radius-card)] border border-[var(--rule)] bg-[var(--card)] px-5 py-5 shadow-[var(--shadow-card)]"
-                >
-                  <span className="text-3xl">{icon}</span>
-                  <p className="mt-3 font-semibold text-[var(--ink)] leading-snug">{text}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </section>
+      {/* ─── HOW IT WORKS ─── */}
+      <section className="lp-how" id="how">
+        <div className="lp-how-head" data-reveal="">
+          <div className="lp-eyebrow"><span className="dot" />How it works ／ 3 STEPS</div>
+          <h2>メール一通で、<br /><em>締切を、見張る側に。</em></h2>
+          <p>アプリのダウンロードは要りません。マジックリンクでログインして、締切を3つ登録するだけ。</p>
+        </div>
 
-        {/* ── 使い方 ── */}
-        <section className="py-16 lg:py-24">
-          <motion.div
-            initial={fadeUp.initial}
-            whileInView={fadeUp.animate}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={fadeUp.transition}
-            className="mx-auto max-w-5xl px-6"
-          >
-            <p
-              className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-4)] text-center"
-            >
-              HOW IT WORKS
-            </p>
-            <h2
-              className="mt-3 text-center text-[28px] font-black text-[var(--ink)] lg:text-[34px]"
-              style={{ letterSpacing: "-0.025em" }}
-            >
-              3ステップで使い始める
-            </h2>
-            <div className="mt-10 grid gap-6 sm:grid-cols-3">
-              {HOW_STEPS.map(({ num, title, desc }) => (
-                <div key={num} className="flex flex-col gap-3">
-                  <span
-                    className="font-mono text-[32px] font-black text-[var(--ink-4)]"
-                    style={{ letterSpacing: "-0.04em" }}
-                  >
-                    {num}
-                  </span>
-                  <h3 className="text-base font-bold text-[var(--ink)]">{title}</h3>
-                  <p className="text-sm text-[var(--ink-3)] leading-relaxed">{desc}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </section>
-
-        {/* ── 料金プラン ── */}
-        <section
-          className="border-y border-[var(--rule)] py-16 lg:py-24"
-          style={{ background: "var(--paper-2)" }}
-        >
-          <motion.div
-            initial={fadeUp.initial}
-            whileInView={fadeUp.animate}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={fadeUp.transition}
-            className="mx-auto max-w-5xl px-6"
-          >
-            <p
-              className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-4)] text-center"
-            >
-              PRICING
-            </p>
-            <h2
-              className="mt-3 text-center text-[28px] font-black text-[var(--ink)] lg:text-[34px]"
-              style={{ letterSpacing: "-0.025em" }}
-            >
-              シンプルな料金プラン
-            </h2>
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 sm:max-w-2xl sm:mx-auto">
-              {/* Free */}
-              <div className="rounded-[var(--radius-card)] border border-[var(--rule)] bg-[var(--card)] p-7 shadow-[var(--shadow-card)]">
-                <p
-                  className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-4)]"
-                >
-                  FREE
-                </p>
-                <p
-                  className="mt-2 text-[38px] font-black text-[var(--ink)]"
-                  style={{ letterSpacing: "-0.03em" }}
-                >
-                  ¥0
-                  <span className="text-base font-normal text-[var(--ink-4)]">/月</span>
-                </p>
-                <p className="mt-0.5 text-sm text-[var(--ink-4)]">ずっと無料</p>
-                <ul className="mt-6 space-y-2.5">
-                  {FREE_FEATURES.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-[var(--ink-2)]">
-                      <span className="mt-0.5 text-[var(--s-done)] font-bold">✓</span>
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/login"
-                  className="mt-7 block rounded-[12px] border border-[var(--rule)] px-4 py-3 text-center text-sm font-semibold text-[var(--ink-2)] transition-colors hover:border-[var(--ink-3)] hover:bg-[var(--paper-2)]"
-                >
-                  無料ではじめる
-                </Link>
+        <div className="lp-how-steps">
+          <article className="lp-step" data-reveal="">
+            <div className="lp-step-num">STEP / 01 <span className="arrow">→</span></div>
+            <h3>大学のメールで、マジックリンク認証。</h3>
+            <p>パスワードもアプリも不要。〆トラから届くワンタップのリンクで、すぐにダッシュボードへ。</p>
+            <div className="lp-step-visual">
+              <div className="lp-sv-email">
+                <span className="at">⌗</span>
+                <span>you@university.ac.<span className="ing">jp</span></span>
               </div>
-
-              {/* Pro */}
-              <div
-                className="rounded-[var(--radius-card)] p-7 text-white relative overflow-hidden"
-                style={{
-                  background: "var(--ink)",
-                  boxShadow: "var(--shadow-pop)",
-                }}
-              >
-                <span
-                  className="pointer-events-none absolute right-[-20px] bottom-[-50px] select-none leading-none font-black"
-                  style={{
-                    color: "rgba(255,255,255,0.05)",
-                    fontFamily: '"Noto Sans JP", serif',
-                    fontSize: 160,
-                    lineHeight: 1,
-                  }}
-                  aria-hidden="true"
-                >
-                  〆
-                </span>
-                <div className="flex items-center justify-between">
-                  <p
-                    className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60"
-                  >
-                    PRO
-                  </p>
-                  <span className="rounded-full bg-brand/30 px-2.5 py-0.5 text-[11px] font-semibold text-brand-light">
-                    おすすめ
-                  </span>
-                </div>
-                <p
-                  className="mt-2 text-[38px] font-black"
-                  style={{ letterSpacing: "-0.03em" }}
-                >
-                  ¥980
-                  <span className="text-base font-normal text-white/50">/月</span>
-                </p>
-                <p className="mt-0.5 text-sm text-white/50">税込</p>
-                <ul className="mt-6 space-y-2.5">
-                  {PRO_FEATURES.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-white/80">
-                      <span className="mt-0.5 font-bold text-brand-light">✓</span>
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/login"
-                  className="relative z-10 mt-7 block rounded-[12px] bg-brand px-4 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-brand-hover"
-                >
-                  Pro ではじめる
-                </Link>
+              <div className="lp-sv-link">
+                <span className="lbl">From / 〆トラ ・ INBOX</span>
+                <span className="seal">〆</span>
+                <span className="ttl">マジックリンクでログイン</span>
+                <span className="desc">このリンクは 30 分間有効です。</span>
               </div>
             </div>
-          </motion.div>
-        </section>
+          </article>
 
-        {/* ── CTA ── */}
-        <section className="py-20 lg:py-28">
-          <motion.div
-            initial={fadeUp.initial}
-            whileInView={fadeUp.animate}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={fadeUp.transition}
-            className="mx-auto max-w-xl px-6 text-center"
-          >
-            <h2
-              className="text-[28px] font-black text-[var(--ink)] lg:text-[34px]"
-              style={{ letterSpacing: "-0.025em" }}
+          <article className="lp-step" data-reveal="">
+            <div className="lp-step-num">STEP / 02 <span className="arrow">→</span></div>
+            <h3>締切を、3 タップで登録。</h3>
+            <p>企業名・種別・日時。種別はタイル選択、日時は「今夜23:59」などのクイックボタンから。</p>
+            <div className="lp-step-visual">
+              <div className="lp-sv-form">
+                <div className="lp-sv-field">
+                  <span className="k">COMPANY</span>
+                  メルカリ
+                </div>
+                <div className="lp-sv-tiles">
+                  <div className="lp-sv-tile">
+                    <span className="ic">ES</span>
+                    <span className="nm">ES</span>
+                    <span className="dt">エントリー</span>
+                  </div>
+                  <div className="lp-sv-tile on">
+                    <span className="ic">面</span>
+                    <span className="nm">面接</span>
+                    <span className="dt">5/14 14:00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article className="lp-step" data-reveal="">
+            <div className="lp-step-num">STEP / 03 <span className="arrow">→</span></div>
+            <h3>72/24/3 時間前に、メール通知。</h3>
+            <p>常駐するアプリも、鳴り続けるプッシュもなし。受信箱に、3 通の静かなリマインド。</p>
+            <div className="lp-step-visual">
+              <div className="lp-sv-notif-stack">
+                <div className="lp-sv-notif">
+                  <span className="ic">〆</span>
+                  <div>
+                    <div className="row"><span>72H前</span><span>3日前</span></div>
+                    <div className="ttl">メルカリ 面接まで残り 72 時間</div>
+                    <div className="desc">そろそろ準備をはじめましょう。</div>
+                  </div>
+                </div>
+                <div className="lp-sv-notif">
+                  <span className="ic">〆</span>
+                  <div>
+                    <div className="row"><span>24H前</span><span>1日前</span></div>
+                    <div className="ttl">残り 24 時間です</div>
+                    <div className="desc">志望動機を最終確認しましょう。</div>
+                  </div>
+                </div>
+                <div className="lp-sv-notif urgent">
+                  <span className="ic">〆</span>
+                  <div>
+                    <div className="row"><span>3H前</span><span>もうすぐ</span></div>
+                    <div className="ttl">あと 3 時間で締切です。</div>
+                    <div className="desc">最後の一通、出してから寝ましょう。</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      {/* ─── URGENCY ─── */}
+      <section className="lp-urgency" id="urgency">
+        <div className="lp-urgency-head">
+          <div data-reveal="">
+            <div className="lp-eyebrow"><span className="dot" />緊急度 ・ 4 階調</div>
+            <h2>色が、<em>時間の温度</em>を教える。</h2>
+          </div>
+          <p data-reveal="">
+            締切までの残り時間で、自動的に色が変わります。赤＝期限切れ、橙＝当日、黄＝3日以内、紺＝通常。
+            円形プログレスは、〆切までの「容量」が埋まっていく感覚を表現します。
+          </p>
+        </div>
+
+        <div className="lp-urg-grid">
+          {URG_CARDS.map(({ cls, off, label, title, desc, n, u }) => (
+            <div
+              key={cls}
+              className={`lp-urg-card ${cls}`}
+              style={{ "--off": off } as React.CSSProperties}
+              data-reveal=""
             >
-              まず無料で試してみる
-            </h2>
-            <p className="mt-4 text-[var(--ink-3)]">
-              登録はメールアドレスだけ。30秒ではじめられます。
-            </p>
+              <div>
+                <div className="lbl">{label}</div>
+                <h3>{title}</h3>
+                <p>{desc}</p>
+              </div>
+              <div className="lp-urg-ring">
+                <svg viewBox="0 0 120 120">
+                  <circle className="bg" cx="60" cy="60" r="51" fill="none" strokeWidth="8" />
+                  <circle className="fg" cx="60" cy="60" r="51" />
+                </svg>
+                <div className="center">
+                  <span className="n">{n}</span>
+                  <span className="u">{u}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── FEATURES (bento) ─── */}
+      <section className="lp-features" id="features">
+        <div className="lp-features-head" data-reveal="">
+          <div className="lp-eyebrow"><span className="dot" />FEATURES ／ 機能</div>
+          <h2>必要なことだけ、<br />美しく。</h2>
+        </div>
+
+        <div className="lp-bento">
+          <article className="lp-bento-cell b-1">
+            <div>
+              <span className="lp-b-icon">〆</span>
+              <h3>巨大カウントダウン。<br />次の〆切に、視線を集中。</h3>
+              <p>ダッシュボードの主役は、いつだって「次の一件」。残り時間を最大の文字で。</p>
+            </div>
+            <div>
+              <div className="lp-b1-visual">
+                <div className="lp-timer-big" ref={b1TimerRef}>
+                  07<span className="unit">d</span>
+                </div>
+                <div className="lp-timer-meta">
+                  <div className="k">NEXT ／ 次の締切</div>
+                  <div className="v">Recruit ・ ES</div>
+                </div>
+              </div>
+              <div className="lp-timer-bar"><div /></div>
+            </div>
+          </article>
+
+          <article className="lp-bento-cell b-2">
+            <span className="lp-b-icon">⌗</span>
+            <h3>ワンタップ・ステータス更新。</h3>
+            <p>カードのピルをタップで「未対応→提出済→完了」を循環。手数は最小。</p>
+            <div className="lp-schedule" aria-hidden="true">
+              <span>未対応</span><span>提出済</span><span>完了</span><span>辞退</span>
+            </div>
+          </article>
+
+          <article className="lp-bento-cell b-3">
+            <span className="lp-b-icon">⌘</span>
+            <h3>4 種類の選考、ぜんぶ。</h3>
+            <p>エントリーシート・説明会・面接・その他。色とアイコンで、瞬時に見分ける。</p>
+            <div className="lp-kinds-row">
+              <span className="k k-es">ES</span>
+              <span className="k k-brief">説明会</span>
+              <span className="k k-itv">面接</span>
+              <span className="k k-other">その他</span>
+            </div>
+          </article>
+
+          <article className="lp-bento-cell b-4">
+            <span className="lp-b-icon">∞</span>
+            <h3>クイック日時。</h3>
+            <p>「今夜23:59」「明日朝9時」「3日後」。よくあるパターンを、1 タップで。</p>
+          </article>
+
+          <article className="lp-bento-cell b-5">
+            <span className="lp-b-icon">◐</span>
+            <h3>紙 / 墨、2 テーマ。</h3>
+            <p>紙の温かみとも、深夜の墨ともつき合える。アクセントは 4 色から。</p>
+            <div className="lp-theme-swatches">
+              <span className="s1" /><span className="s2" /><span className="s3" /><span className="s4" />
+            </div>
+          </article>
+
+          <article className="lp-bento-cell b-6">
+            <span className="lp-b-icon">⌖</span>
+            <h3>メール通知 ・ 72/24/3h。</h3>
+            <p>プッシュ通知ではなく、メール。受信箱を就活の作戦本部に。</p>
+            <div className="lp-schedule">
+              <span>72h</span><span>24h</span><span>3h</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      {/* ─── VOICES ─── */}
+      <section className="lp-voices" id="voices">
+        <div className="lp-voices-head">
+          <div data-reveal="">
+            <div className="lp-eyebrow"><span className="dot" />VOICES ／ ユーザーの声</div>
+            <h2>「もっと早く<br />使いたかった。」</h2>
+          </div>
+          <p data-reveal="">
+            26卒・第二新卒の利用者ヒアリングから。締切の取り逃しが消えた、という声が最も多く寄せられました。
+          </p>
+        </div>
+
+        <div className="lp-voice-grid">
+          <div className="lp-voice" data-reveal="">
+            <div className="quote-mark">&quot;</div>
+            <blockquote>
+              ES の <em>23:59 締切</em>を、寝落ちで逃すのが本当に怖かった。
+              通知が3回飛んでくるから、夜中でも気づける。
+            </blockquote>
+            <div className="who">
+              <div className="avatar">悠</div>
+              <div className="meta">
+                <div className="nm">悠真 ・ 慶應 SFC</div>
+                <div className="role">26卒 ／ コンサル志望</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="lp-voice" data-reveal="">
+            <div className="quote-mark">&quot;</div>
+            <blockquote>
+              Excel と Google カレンダーを行き来していたのが嘘みたい。
+              〆トラを開けば <em>「次の一件」</em>が最初に見える。
+            </blockquote>
+            <div className="who">
+              <div className="avatar">愛</div>
+              <div className="meta">
+                <div className="nm">愛梨 ・ 早稲田 商</div>
+                <div className="role">26卒 ／ 商社志望</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="lp-voice" data-reveal="">
+            <div className="quote-mark">&quot;</div>
+            <blockquote>
+              通知が <em>メール</em>なのが、いい。
+              スマホ通知に疲れている時期に、静かに教えてくれる。
+            </blockquote>
+            <div className="who">
+              <div className="avatar">蓮</div>
+              <div className="meta">
+                <div className="nm">蓮 ・ 一橋 経済</div>
+                <div className="role">第二新卒 ／ メーカー</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── PRICING ─── */}
+      <section className="lp-pricing" id="pricing">
+        <div className="lp-eyebrow"><span className="dot" />PRICING ／ 料金</div>
+        <h2>就活の最中に、<br />お財布を開かせない。</h2>
+
+        <div className="lp-price-cards" data-reveal="">
+          {/* Free */}
+          <div className="lp-price-card">
+            <span className="lp-plan-label">FREE ／ 無料プラン</span>
+            <div className="lp-price-tag">
+              <span className="y">¥</span>
+              <span className="n">0</span>
+              <span className="u">/ 月</span>
+            </div>
+            <div className="note">クレジットカード不要・広告なし</div>
+            <ul className="lp-price-list">
+              {FREE_LIST.map((f) => <li key={f}>{f}</li>)}
+            </ul>
+            <a
+              href="#cta"
+              className="lp-btn-magnet"
+              style={{ width: "100%", justifyContent: "center" }}
+            >
+              無料ではじめる <span className="arrow">→</span>
+            </a>
+          </div>
+
+          {/* Pro */}
+          <div className="lp-price-card featured">
+            <span className="lp-plan-label">
+              PRO ／ プロプラン
+              <span className="lp-price-badge">おすすめ</span>
+            </span>
+            <div className="lp-price-tag">
+              <span className="y">¥</span>
+              <span className="n">{PRO_PRICE_JPY}</span>
+              <span className="u">/ 月</span>
+            </div>
+            <div className="note">税込・いつでも解約可能</div>
+            <ul className="lp-price-list">
+              {PRO_LIST.map((f) => <li key={f}>{f}</li>)}
+            </ul>
             <Link
               href="/login"
-              className="mt-8 inline-block rounded-[14px] bg-[var(--ink)] px-10 py-4 text-base font-bold text-[var(--paper)] transition-all hover:bg-brand hover:-translate-y-px"
-              style={{ boxShadow: "0 12px 32px -8px rgba(15,13,26,0.4)" }}
+              className="lp-btn-magnet"
+              style={{ width: "100%", justifyContent: "center" }}
             >
-              無料登録はこちら →
+              Pro ではじめる <span className="arrow">→</span>
             </Link>
-          </motion.div>
-        </section>
-      </main>
-
-      {/* フッター */}
-      <footer className="border-t border-[var(--rule)] bg-[var(--paper-2)] py-6 text-center text-xs text-[var(--ink-4)]">
-        <nav className="space-x-4">
-          <Link href="/terms" className="hover:text-[var(--ink-2)] hover:underline">
-            利用規約
-          </Link>
-          <Link href="/privacy" className="hover:text-[var(--ink-2)] hover:underline">
-            プライバシーポリシー
-          </Link>
-          <Link href="/legal" className="hover:text-[var(--ink-2)] hover:underline">
-            特定商取引法に基づく表記
-          </Link>
-          <a href="mailto:support@shimetra.com" className="hover:text-[var(--ink-2)] hover:underline">
-            お問い合わせ
-          </a>
-        </nav>
-        <p className="mt-3">© 2026 〆トラ</p>
-      </footer>
-    </div>
-  );
-}
-
-function AppPreview() {
-  return (
-    <div
-      className="rounded-[22px] p-5 shadow-[var(--shadow-pop)] relative overflow-hidden"
-      style={{ background: "var(--ink)" }}
-    >
-      {/* 装飾 */}
-      <span
-        className="pointer-events-none absolute select-none leading-none font-black"
-        style={{
-          color: "rgba(255,255,255,0.04)",
-          fontFamily: '"Noto Sans JP", serif',
-          fontSize: 180,
-          right: -20,
-          bottom: -56,
-          lineHeight: 1,
-        }}
-        aria-hidden="true"
-      >
-        〆
-      </span>
-
-      <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">
-        NEXT DEADLINE
-      </p>
-      <div className="mt-2 flex items-end gap-1">
-        <span
-          className="font-mono text-[52px] font-black leading-none tabular-nums text-white"
-          style={{ letterSpacing: "-0.04em" }}
-        >
-          3
-        </span>
-        <span className="mb-1 text-lg font-semibold text-white/70">日</span>
-      </div>
-      <p className="mt-2 font-semibold text-white/80">株式会社テクノロジー</p>
-      <span className="mt-1 inline-block rounded-full bg-[#e9defb] px-2 py-0.5 text-[11px] font-semibold text-[#5b3a93]">
-        ES
-      </span>
-
-      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/20">
-        <div className="h-full w-[78%] origin-left rounded-full bg-white/80" />
-      </div>
-
-      {/* ミニカード一覧 */}
-      <div className="mt-5 space-y-2.5">
-        {[
-          { company: "〇〇商事", kind: "説明会", days: 7, klass: "bg-[#d8eef0] text-[#1f6168]" },
-          { company: "△△銀行", kind: "面接", days: 14, klass: "bg-[#fde0c8] text-[#a04316]" },
-        ].map(({ company, kind, days, klass }) => (
-          <div
-            key={company}
-            className="flex items-center gap-3 rounded-[14px] border border-white/8 bg-white/8 p-3"
-          >
-            <div className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-white/10">
-              <span className="font-mono text-sm font-bold text-white tabular-nums">{days}</span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-white">{company}</p>
-              <span className={`mt-0.5 inline-block rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold ${klass}`}>
-                {kind}
-              </span>
-            </div>
-            <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold text-white/60">
-              未対応
-            </span>
           </div>
-        ))}
-      </div>
-    </div>
+        </div>
+      </section>
+
+      {/* ─── CTA ─── */}
+      <section className="lp-cta" id="cta" ref={ctaSectionRef}>
+        <span className="lp-cta-mark" ref={ctaMarkRef} aria-hidden="true">〆</span>
+        <div className="lp-cta-inner">
+          <div className="lp-eyebrow"><span className="dot" />READY ／ あと、ひとつだけ。</div>
+          <h2>締切を、<br /><em>味方に</em>変える。</h2>
+          <p>メールアドレスを入れて、マジックリンクを受け取るだけ。30 秒で、ダッシュボードへ。</p>
+
+          {submitted ? (
+            <div className="lp-cta-sent">
+              ✓ メールを送信しました。受信箱をご確認ください。
+            </div>
+          ) : (
+            <form className="lp-cta-form" onSubmit={handleSubmit}>
+              <input
+                type="email"
+                placeholder="you@university.ac.jp"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <button type="submit" disabled={sending}>
+                {sending ? "送信中..." : <>マジックリンクを送る <span className="arrow">→</span></>}
+              </button>
+            </form>
+          )}
+          {errMsg && (
+            <p style={{ color: "var(--u-overdue)", marginTop: 12, fontSize: 14 }}>{errMsg}</p>
+          )}
+          <div className="lp-cta-foot">NO PASSWORDS ・ NO APP ・ NO ADS</div>
+        </div>
+      </section>
+
+      {/* ─── FOOTER ─── */}
+      <footer className="lp-footer">
+        <div className="lp-footer-inner">
+          <div className="brand">
+            <span className="seal">〆</span>
+            SHIMETRA ／ 〆トラ
+          </div>
+          <div className="links">
+            <Link href="/terms">利用規約</Link>
+            <Link href="/privacy">プライバシー</Link>
+            <Link href="/legal">特定商取引法</Link>
+            <a href="mailto:support@shimetra.com">お問い合わせ</a>
+          </div>
+          <div>© 2026 SHIMETRA · MADE WITH 〆</div>
+        </div>
+      </footer>
+    </>
   );
 }

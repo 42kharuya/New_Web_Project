@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { GtmScript } from "./_components/GtmScript";
 import { ConditionalHeader } from "./_components/ConditionalHeader";
+import { ConditionalFooter } from "./_components/ConditionalFooter";
 import { getSession } from "@/features/auth/session";
 import "./globals.css";
 
@@ -25,25 +25,7 @@ export default async function RootLayout({
         <GtmScript />
         {session && <ConditionalHeader email={session.email} />}
         <div className="flex-1">{children}</div>
-        <footer className="border-t border-[var(--rule)] bg-[var(--paper-2)] py-4 text-center text-xs text-[var(--ink-4)]">
-          <nav className="space-x-4">
-            <Link href="/terms" className="hover:underline">
-              利用規約
-            </Link>
-            <Link href="/privacy" className="hover:underline">
-              プライバシーポリシー
-            </Link>
-            <Link href="/legal" className="hover:underline">
-              特定商取引法に基づく表記
-            </Link>
-            <a
-              href="mailto:support@shimetra.com"
-              className="hover:underline"
-            >
-              お問い合わせ
-            </a>
-          </nav>
-        </footer>
+        <ConditionalFooter />
       </body>
     </html>
   );
