@@ -255,7 +255,7 @@ export function HomePageClient() {
           <a href="#problem">課題</a>
           <a href="#how">使い方</a>
           <a href="#features">機能</a>
-          <a href="#voices">声</a>
+          <a href="#faq">FAQ</a>
           <a href="#pricing">料金</a>
         </div>
         <a href="#cta" className="lp-nav-cta">
@@ -460,7 +460,7 @@ export function HomePageClient() {
             <p>パスワードもアプリも不要。〆トラから届くワンタップのリンクで、すぐにダッシュボードへ。</p>
             <div className="lp-step-visual">
               <div className="lp-sv-email">
-                <span className="at">⌗</span>
+                <span className="at">✉</span>
                 <span>you@university.ac.<span className="ing">jp</span></span>
               </div>
               <div className="lp-sv-link">
@@ -484,14 +484,20 @@ export function HomePageClient() {
                 </div>
                 <div className="lp-sv-tiles">
                   <div className="lp-sv-tile">
-                    <span className="ic">ES</span>
+                    <span className="ic">📝</span>
                     <span className="nm">ES</span>
-                    <span className="dt">エントリー</span>
                   </div>
                   <div className="lp-sv-tile on">
-                    <span className="ic">面</span>
+                    <span className="ic">🗣️</span>
                     <span className="nm">面接</span>
-                    <span className="dt">5/14 14:00</span>
+                  </div>
+                  <div className="lp-sv-tile">
+                    <span className="ic">📅</span>
+                    <span className="nm">説明会</span>
+                  </div>
+                  <div className="lp-sv-tile">
+                    <span className="ic">📌</span>
+                    <span className="nm">その他</span>
                   </div>
                 </div>
               </div>
@@ -650,63 +656,74 @@ export function HomePageClient() {
         </div>
       </section>
 
-      {/* ─── VOICES ─── */}
-      <section className="lp-voices" id="voices">
-        <div className="lp-voices-head">
+      {/* ─── FAQ ─── */}
+      <section className="lp-faq" id="faq">
+        <div className="lp-faq-head">
           <div data-reveal="">
-            <div className="lp-eyebrow"><span className="dot" />VOICES ／ ユーザーの声</div>
-            <h2>「もっと早く<br />使いたかった。」</h2>
+            <div className="lp-eyebrow"><span className="dot" />FAQ ／ よくある質問</div>
+            <h2>気になって<br />いることに、答える。</h2>
           </div>
           <p data-reveal="">
-            26卒・第二新卒の利用者ヒアリングから。締切の取り逃しが消えた、という声が最も多く寄せられました。
+            〆トラへの質問をまとめました。ここにない疑問は、お問い合わせよりどうぞ。
           </p>
         </div>
 
-        <div className="lp-voice-grid">
-          <div className="lp-voice" data-reveal="">
-            <div className="quote-mark">&quot;</div>
-            <blockquote>
-              ES の <em>23:59 締切</em>を、寝落ちで逃すのが本当に怖かった。
-              通知が3回飛んでくるから、夜中でも気づける。
-            </blockquote>
-            <div className="who">
-              <div className="avatar">悠</div>
-              <div className="meta">
-                <div className="nm">悠真 ・ 慶應 SFC</div>
-                <div className="role">26卒 ／ コンサル志望</div>
-              </div>
-            </div>
-          </div>
+        <div className="lp-faq-list" data-reveal="">
+          <details className="lp-faq-item">
+            <summary>
+              無料プランは本当に無料ですか？
+              <i className="icon">+</i>
+            </summary>
+            <p className="ans">
+              はい、<strong>クレジットカード不要・広告なし</strong>で、締切アイテム10件まで永続的に無料でご利用いただけます。
+              有料のProプランは機能を拡張したい方向けで、無料プランのまま使い続けても自動的に課金されることはありません。
+            </p>
+          </details>
 
-          <div className="lp-voice" data-reveal="">
-            <div className="quote-mark">&quot;</div>
-            <blockquote>
-              Excel と Google カレンダーを行き来していたのが嘘みたい。
-              〆トラを開けば <em>「次の一件」</em>が最初に見える。
-            </blockquote>
-            <div className="who">
-              <div className="avatar">愛</div>
-              <div className="meta">
-                <div className="nm">愛梨 ・ 早稲田 商</div>
-                <div className="role">26卒 ／ 商社志望</div>
-              </div>
-            </div>
-          </div>
+          <details className="lp-faq-item">
+            <summary>
+              アプリのダウンロードは必要ですか？
+              <i className="icon">+</i>
+            </summary>
+            <p className="ans">
+              不要です。〆トラはWebアプリです。スマートフォンでもPCでも、ブラウザからアクセスするだけで使えます。
+              <strong>マジックリンク認証</strong>でパスワードの設定も不要なため、30秒でダッシュボードに入れます。
+            </p>
+          </details>
 
-          <div className="lp-voice" data-reveal="">
-            <div className="quote-mark">&quot;</div>
-            <blockquote>
-              通知が <em>メール</em>なのが、いい。
-              スマホ通知に疲れている時期に、静かに教えてくれる。
-            </blockquote>
-            <div className="who">
-              <div className="avatar">蓮</div>
-              <div className="meta">
-                <div className="nm">蓮 ・ 一橋 経済</div>
-                <div className="role">第二新卒 ／ メーカー</div>
-              </div>
-            </div>
-          </div>
+          <details className="lp-faq-item">
+            <summary>
+              通知はどのタイミングで届きますか？
+              <i className="icon">+</i>
+            </summary>
+            <p className="ans">
+              無料プランは締切の<strong>24時間前</strong>に1回、メール通知が届きます。
+              Proプランでは<strong>72時間前・24時間前・3時間前</strong>の計3回通知します。
+              プッシュ通知ではなくメール通知のため、アプリの常駐は不要です。
+            </p>
+          </details>
+
+          <details className="lp-faq-item">
+            <summary>
+              どのメールアドレスでも登録できますか？
+              <i className="icon">+</i>
+            </summary>
+            <p className="ans">
+              大学のメールアドレス（<code>@ac.jp</code>）だけでなく、GmailやYahooメールなど一般的なメールアドレスでもご登録いただけます。
+              通知はご登録のメールアドレスに届きます。
+            </p>
+          </details>
+
+          <details className="lp-faq-item">
+            <summary>
+              Proプランはいつでも解約できますか？
+              <i className="icon">+</i>
+            </summary>
+            <p className="ans">
+              はい、<strong>いつでも解約可能</strong>です。解約後は翌月から課金が停止し、残りの期間はProプランの機能をそのままご利用いただけます。
+              就活が終わったら気軽に解約してください。
+            </p>
+          </details>
         </div>
       </section>
 

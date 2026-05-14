@@ -29,11 +29,16 @@
   /* Rule */
   --rule: rgba(15, 13, 26, 0.08);
 
-  /* Brand */
-  --brand:     #4f46e5;
-  --brand-600: #4338ca;
-  --brand-50:  #eef2ff;
-  --brand-100: #e0e7ff;
+  /* Brand
+   * --brand      : primary action color (buttons, links, focus rings)
+   * --brand-light: brand on dark backgrounds (LP dark sections)
+   * --brand-600  : hover/pressed state
+   * --brand-50/100: tinted surfaces */
+  --brand:       #4f46e5;
+  --brand-light: #a5b4fc;
+  --brand-600:   #4338ca;
+  --brand-50:    #eef2ff;
+  --brand-100:   #e0e7ff;
 
   /* Urgency */
   --u-overdue:    #d23a3a;
