@@ -49,7 +49,6 @@ export function HomePageClient() {
   const b1TimerRef    = useRef<HTMLDivElement>(null);
   const ctaMarkRef    = useRef<HTMLSpanElement>(null);
   const ctaSectionRef = useRef<HTMLElement>(null);
-  const stat82Ref     = useRef<HTMLDivElement>(null);
 
   const [email,     setEmail]     = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -193,34 +192,6 @@ export function HomePageClient() {
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  /* ── stats counter animate (82%) ── */
-  useEffect(() => {
-    const numEl = stat82Ref.current;
-    if (!numEl) return;
-    const row = numEl.closest(".lp-stat-row") as HTMLElement | null;
-    if (!row) return;
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (!e.isIntersecting) return;
-          const dur = 1200, t0 = performance.now();
-          function step(t: number) {
-            const p = Math.min(1, (t - t0) / dur);
-            const v = Math.floor((1 - Math.pow(1 - p, 3)) * 82);
-            numEl!.innerHTML = `${v}<span class="pct">%</span>`;
-            if (p < 1) requestAnimationFrame(step);
-          }
-          requestAnimationFrame(step);
-          io.unobserve(row!);
-        });
-      },
-      { threshold: 0.5 },
-    );
-    io.observe(row);
-    return () => io.disconnect();
   }, []);
 
   /* ── smooth anchor scroll (offset for fixed nav) ── */
@@ -450,26 +421,24 @@ export function HomePageClient() {
 
           <div className="lp-stats-stack">
             <div className="lp-stat-row" data-reveal="">
-              <div className="lp-stat-num" ref={stat82Ref}>
-                82<span className="pct">%</span>
-              </div>
+              <div className="lp-stat-num">49.9<span className="pct">%</span></div>
               <p>
-                就活生が「締切を忘れて出せなかった経験がある／焦った経験がある」と回答。
-                <span className="src">SOURCE — 〆トラ ユーザーアンケート n=812</span>
+                就活生の約5割が、ES の締切が早すぎて応募できなかった企業があると回答。タイミングを逃した応募は取り戻せない。
+                <span className="src">SOURCE — キャリタス就活 学生モニター調査 2026年卒（2025年4月 / n=1,134）</span>
               </p>
             </div>
             <div className="lp-stat-row" data-reveal="">
-              <div className="lp-stat-num">3.4<span className="pct">件</span></div>
+              <div className="lp-stat-num">12.4<span className="pct">社</span></div>
               <p>
-                1人あたり、平均で同時並行して動いている選考の数。ピーク時は 10 件超。
-                <span className="src">SOURCE — 22-24卒 ヒアリング</span>
+                就活生1人あたりの ES 提出社数の平均。活動ピーク期は複数社の選考が同時進行する。
+                <span className="src">SOURCE — 就職みらい研究所 就職白書2025（リクルート / 2025年2月）</span>
               </p>
             </div>
             <div className="lp-stat-row" data-reveal="">
-              <div className="lp-stat-num">23<span className="pct">:59</span></div>
+              <div className="lp-stat-num">8.5<span className="pct">ヶ月</span></div>
               <p>
-                ES 締切の 6 割が「当日 23:59」設定。寝落ち1回が、就活ひとつを終わらせる。
-                <span className="src">SOURCE — 主要 50 社 採用ページ調査</span>
+                就職活動の実質活動期間の平均。約8ヶ月以上にわたり、毎週のように誰かの締切が訪れる。
+                <span className="src">SOURCE — 就職みらい研究所 就職白書2025（リクルート / 2025年2月）</span>
               </p>
             </div>
           </div>
