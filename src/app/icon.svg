@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="#0f0d1a"/>
+  <text
+    x="16"
+    y="24"
+    text-anchor="middle"
+    font-family="'Hiragino Sans', 'Yu Gothic', 'Noto Sans JP', sans-serif"
+    font-weight="900"
+    font-size="20"
+    fill="#f7f5f0"
+  >〆</text>
+</svg>
