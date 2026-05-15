@@ -104,7 +104,22 @@ html { scroll-behavior: smooth; }
 .lp-nav-cta:hover { background: var(--brand); transform: translateY(-1px); }
 .lp-nav-cta .arrow { transition: transform .2s; }
 .lp-nav-cta:hover .arrow { transform: translateX(3px); }
-@media (max-width: 720px) { .lp-nav-links { display: none; } }
+.lp-nav-actions { display: flex; align-items: center; gap: 8px; }
+.lp-nav-login {
+  font-size: 13px; font-weight: 500;
+  padding: 9px 16px;
+  color: var(--ink-2);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  display: inline-flex; align-items: center;
+  text-decoration: none;
+  transition: color .2s, border-color .2s;
+}
+.lp-nav-login:hover { color: var(--ink); border-color: var(--ink); }
+@media (max-width: 720px) {
+  .lp-nav-links { display: none; }
+  .lp-nav-login { display: none; }
+}
 
 /* ── hero ───────────────────────────────────────────────── */
 .lp-hero {
