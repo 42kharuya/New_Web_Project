@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import LoginForm from "./LoginForm";
-import { NotificationToast } from "./_components/NotificationToast";
 
 export const metadata = {
   title: "ログイン | 〆トラ",
@@ -45,7 +44,7 @@ export default function LoginPage() {
             className="text-[38px] font-black leading-tight"
             style={{ letterSpacing: "-0.035em" }}
           >
-            締切を、<br />出し忘れない<br />人生に。
+            アプリに登録して、<br />就活の締切を<br />管理。
           </h1>
           <p className="text-[var(--ink-4)] text-base leading-relaxed max-w-[280px]">
             ES・説明会・面接の締切を一元管理し、<br />
@@ -65,23 +64,10 @@ export default function LoginPage() {
           </ul>
         </div>
 
-        {/* 通知トースト（PC） */}
-        <div className="relative z-10">
-          <Suspense>
-            <NotificationToast />
-          </Suspense>
-        </div>
       </div>
 
       {/* ── 右カラム（フォーム） ── */}
       <div className="flex flex-1 flex-col px-6 py-10 lg:px-14 lg:py-14 lg:max-w-[480px]">
-        {/* モバイルのみ: トースト */}
-        <div className="mb-8 lg:hidden">
-          <Suspense>
-            <NotificationToast />
-          </Suspense>
-        </div>
-
         {/* big-seal */}
         <div className="mb-8">
           <div
@@ -102,10 +88,10 @@ export default function LoginPage() {
           className="text-[30px] font-black text-[var(--ink)] leading-tight"
           style={{ letterSpacing: "-0.035em" }}
         >
-          締切を、出し忘れない人生に。
+          メールアドレスを登録。
         </h1>
         <p className="mt-2 text-sm text-[var(--ink-3)]">
-          メールアドレスを入力するとログインリンクを送ります。
+          入力されたメールアドレスにログインリンクを送信します。
         </p>
 
         <div className="mt-8">
