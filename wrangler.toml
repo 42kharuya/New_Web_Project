@@ -1,5 +1,5 @@
 # Cloudflare Workers 設定
-# @opennextjs/cloudflare が生成した .open-next/worker.js を Deploy する
+# worker.ts が opennextjs-cloudflare の worker.js をラップし scheduled ハンドラを追加する
 # see: https://opennext.js.org/cloudflare
 #
 # ── デプロイ手順 ────────────────────────────────────────────────────
@@ -20,7 +20,7 @@
 # -------------------------------------------------------------------
 
 name = "job-hunt-tracker"
-main = ".open-next/worker.js"
+main = "worker.ts"
 compatibility_date = "2025-09-23"
 compatibility_flags = ["nodejs_compat"]
 
