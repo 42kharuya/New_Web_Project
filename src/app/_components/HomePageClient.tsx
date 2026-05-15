@@ -268,18 +268,19 @@ export function HomePageClient() {
           <div className="lp-hero-left">
             <div className="lp-eyebrow">
               <span className="dot" />
-              就活 のための締切管理ノート
+              就活生 のための締切管理ノート
             </div>
 
             <h1 className="lp-hero-title">
-              <span className="line"><span className="word">就活の締め切り管理を</span></span>
-              <span className="line"><span className="word"><em>これ一つで。</em></span></span>
+              <span className="line"><span className="word"><em>就活管理は</em></span></span>
+              <span className="line"><span className="word">これ一つで。</span></span>
               <span className="line"><span className="word"><span className="accent">〆トラ。</span></span></span>
             </h1>
 
             <p className="lp-hero-sub">
-              ES・説明会・面接の締切を一箇所に。<strong>72 / 24 / 3 時間前</strong>に、
-              〆トラがメールでそっと教えてくれる。スマホに余計なアプリは要らない、メール一通だけの安心。
+              ES・説明会・面接の締切を一箇所に。<br />
+              スマホに余計なアプリは要らない。<br />
+              <strong>72 / 24 / 3 時間前</strong>に、〆トラがメールでそっと教えてくれる。
             </p>
 
             <div className="lp-hero-cta-row">
@@ -420,8 +421,11 @@ export function HomePageClient() {
       <section className="lp-how" id="how">
         <div className="lp-how-head" data-reveal="">
           <div className="lp-eyebrow"><span className="dot" />How it works ／ 3 STEPS</div>
-          <h2>メール一通で、<br /><em>締切を、見張る側に。</em></h2>
-          <p>アプリのダウンロードは要りません。マジックリンクでログインして、締切を登録するだけで、締め切りをメールで通知します。</p>
+          <h2>
+            メール一通で、<br />
+            <em>締切を思い出す。</em>
+          </h2>
+          <p>アプリのダウンロードは不要。マジックリンクでログインして、締切を登録するだけで、締め切りをメールで通知します。</p>
         </div>
 
         <div className="lp-how-steps">
