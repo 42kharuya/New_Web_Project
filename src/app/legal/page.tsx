@@ -23,6 +23,10 @@ const ITEMS: { label: string; value: React.ReactNode }[] = [
     ),
   },
   {
+    label: "電話番号",
+    value: "090-8266-6424",
+  },
+  {
     label: "販売価格",
     value: "Proプラン：980円（税込）/ 月",
   },

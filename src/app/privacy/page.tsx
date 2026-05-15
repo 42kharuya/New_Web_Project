@@ -47,11 +47,11 @@ export default function PrivacyPage() {
 
       <section className="mb-6">
         <h2 className="mb-2 font-semibold text-slate-900">
-          3. 第三者への提供
+          3. 第三者への提供・業務委託
         </h2>
         <p>
           法令に基づく場合を除き、取得した個人情報を第三者に提供しません。
-          ただし、以下のサービスに必要最小限の情報を提供します。
+          ただし、サービス運営のため以下の業務委託先・利用サービスに必要最小限の情報を預託・提供します。
         </p>
         <ul className="mt-2 list-disc pl-5 space-y-1">
           <li>
@@ -68,13 +68,22 @@ export default function PrivacyPage() {
           <li>
             <strong>Resend</strong>（メール送信）：メールアドレス・本文を送信のために共有
           </li>
+          <li>
+            <strong>Cloudflare</strong>（サービス実行基盤・CDN）：サービス提供に際しアクセスログ等が処理されます
+          </li>
+          <li>
+            <strong>Neon</strong>（データベース）：メールアドレス・締切データ等を保管します
+          </li>
+          <li>
+            <strong>Upstash</strong>（レート制限）：不正利用防止のためリクエスト情報が一時的に処理されます
+          </li>
         </ul>
       </section>
 
       <section className="mb-6">
         <h2 className="mb-2 font-semibold text-slate-900">4. データの保管</h2>
         <p>
-          取得したデータはクラウドサーバー（Vercel + PostgreSQL）に保管します。
+          取得したデータはクラウドサーバー（Cloudflare Workers + Neon）に保管します。
           不正アクセス防止のための適切な技術的措置を講じています。
         </p>
       </section>
@@ -92,8 +101,6 @@ export default function PrivacyPage() {
           >
             support@shimetra.com
           </a>
-          <br />
-          <span className="text-xs text-slate-500">（※ドメインはローンチ前に実際のアドレスに変更してください）</span>
         </p>
       </section>
 
@@ -101,8 +108,9 @@ export default function PrivacyPage() {
         <h2 className="mb-2 font-semibold text-slate-900">6. Cookie・計測</h2>
         <p>
           セッション管理のためにCookieを使用します。
-          また、サービス改善のためアクセス解析（ページビュー・イベント計測）を行います。
-          個人を特定する情報は計測データに含めません。
+          サービス改善のためサーバーサイドで利用状況のログを記録することがあります。
+          外部のアクセス解析ツール（Google Analytics 等）は現時点では使用していません。
+          個人を特定する情報はログに含めません。
         </p>
       </section>
 
