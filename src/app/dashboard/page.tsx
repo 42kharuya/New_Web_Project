@@ -73,8 +73,10 @@ export default async function DashboardPage() {
         style={{ letterSpacing: "-0.025em" }}
       >
         {todoItems.length === 0
-          ? "締切アイテムはありません"
-          : `今日の締切は${overdueItems.length > 0 ? `${overdueItems.length}件期限切れ` : `${todoItems.length}件あります`}。`}
+          ? "締切登録はありません"
+          : overdueItems.length > 0
+            ? `現在の締切登録：${todoItems.length}件（${overdueItems.length}件期限切れ。）`
+            : `現在の締切登録：${todoItems.length}件`}
       </h1>
 
       {/* HeroCard */}
@@ -89,7 +91,7 @@ export default async function DashboardPage() {
         <div className="mt-4 grid grid-cols-3 gap-2">
           <div className="rounded-[14px] border border-[var(--rule)] bg-[var(--card)] px-3 py-3">
             <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-4)]">
-              TODO
+              登録中
             </p>
             <p
               className="mt-1 text-[24px] font-extrabold text-[var(--ink)]"
@@ -106,7 +108,7 @@ export default async function DashboardPage() {
             }`}
           >
             <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-4)]">
-              OVERDUE
+              期限切れ
             </p>
             <p
               className="mt-1 text-[24px] font-extrabold"
@@ -121,7 +123,7 @@ export default async function DashboardPage() {
           </div>
           <div className="rounded-[14px] border border-[var(--rule)] bg-[var(--card)] px-3 py-3">
             <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-4)]">
-              DONE
+              完了
             </p>
             <p
               className="mt-1 text-[24px] font-extrabold text-[var(--s-done)]"
