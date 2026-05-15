@@ -17,21 +17,12 @@ export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
     siteName: "〆トラ",
-    images: [
-      {
-        url: "/ogp-lp.png",
-        width: 1200,
-        height: 630,
-        alt: "〆トラ — 締切ミスを、もうしない。",
-      },
-    ],
     locale: "ja_JP",
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: TITLE,
     description: DESCRIPTION,
-    images: ["/ogp-lp.png"],
   },
 };
 

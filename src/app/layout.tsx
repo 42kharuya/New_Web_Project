@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.APP_URL ?? "https://shimetra.com",
   ),
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default async function RootLayout({
