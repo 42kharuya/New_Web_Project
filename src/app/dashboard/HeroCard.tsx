@@ -4,50 +4,35 @@ import { useEffect, useState } from "react";
 import { KIND_LABEL } from "@/features/deadlines/format";
 import type { DeadlineItem } from "./DeadlineList";
 
-const GREETINGS = [
-  [5, 12, "GOOD MORNING"],
-  [12, 17, "GOOD AFTERNOON"],
-  [17, 22, "GOOD EVENING"],
-  [22, 24, "GOOD NIGHT"],
-  [0, 5, "GOOD NIGHT"],
-] as const;
-
-function greeting(h: number) {
-  return GREETINGS.find(([s, e]) => h >= s && h < e)?.[2] ?? "HELLO";
-}
-
 function timeLeft(iso: string): {
-  value: number;
-  unit: string;
+  hours: number;
+  minutes: number;
+  seconds: number;
   overdue: boolean;
   progress: number;
 } {
   const diffMs = new Date(iso).getTime() - Date.now();
-  if (diffMs < 0) return { value: 0, unit: "期限切れ", overdue: true, progress: 1 };
-  const hours = diffMs / (1000 * 60 * 60);
-  const days = Math.floor(hours / 24);
+  if (diffMs < 0) return { hours: 0, minutes: 0, seconds: 0, overdue: true, progress: 1 };
+  const totalSec = Math.floor(diffMs / 1000);
+  const hours = Math.floor(totalSec / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  const seconds = totalSec % 60;
+  const days = Math.floor(totalSec / 86400);
   const progress = Math.max(0.06, Math.min(1, (14 - days) / 14));
-  if (days > 0) return { value: days, unit: "日", overdue: false, progress };
-  return { value: Math.ceil(hours), unit: "時間", overdue: false, progress };
+  return { hours, minutes, seconds, overdue: false, progress };
 }
 
+const pad = (n: number) => String(n).padStart(2, "0");
+
 export function HeroCard({ item }: { item: DeadlineItem }) {
-  const [now, setNow] = useState(() => new Date());
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 60_000);
+    const t = setInterval(() => setTick((n) => n + 1), 1_000);
     return () => clearInterval(t);
   }, []);
 
-  const h = now.getHours();
-  const greet = greeting(h);
-  const dateLabel = now.toLocaleDateString("ja-JP", {
-    month: "long",
-    day: "numeric",
-    weekday: "short",
-  });
-
-  const { value, unit, overdue, progress } = timeLeft(item.deadlineAt);
+  const { hours, minutes, seconds, overdue, progress } = timeLeft(item.deadlineAt);
 
   return (
     <div
@@ -81,27 +66,51 @@ export function HeroCard({ item }: { item: DeadlineItem }) {
         aria-hidden="true"
       />
 
-      {/* グリーティング */}
+      {/* 「次の締め切りまで」ラベル */}
       <p
         className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] opacity-60"
       >
-        {greet} · {dateLabel}
+        次の締め切りまで
       </p>
 
       {/* カウントダウン */}
-      <div className="mt-2 flex items-end gap-1">
+      <div className="mt-2 flex items-end gap-1.5">
         <span
-          className="font-mono leading-none tabular-nums"
+          className="font-mono tabular-nums leading-none"
           style={{
-            fontSize: 56,
+            fontSize: 48,
             fontWeight: 800,
             letterSpacing: "-0.04em",
             color: overdue ? "var(--u-overdue)" : "white",
           }}
         >
-          {value}
+          {pad(hours)}
         </span>
-        <span className="mb-1.5 text-lg font-semibold opacity-80">{unit}</span>
+        <span className="mb-1.5 text-base font-semibold opacity-70">h</span>
+        <span
+          className="font-mono tabular-nums leading-none"
+          style={{
+            fontSize: 48,
+            fontWeight: 800,
+            letterSpacing: "-0.04em",
+            color: overdue ? "var(--u-overdue)" : "white",
+          }}
+        >
+          {pad(minutes)}
+        </span>
+        <span className="mb-1.5 text-base font-semibold opacity-70">m</span>
+        <span
+          className="font-mono tabular-nums leading-none"
+          style={{
+            fontSize: 48,
+            fontWeight: 800,
+            letterSpacing: "-0.04em",
+            color: overdue ? "var(--u-overdue)" : "white",
+          }}
+        >
+          {pad(seconds)}
+        </span>
+        <span className="mb-1.5 text-base font-semibold opacity-70">s</span>
       </div>
 
       {/* 企業名・種別 */}
