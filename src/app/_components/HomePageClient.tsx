@@ -255,9 +255,12 @@ export function HomePageClient() {
           <a href="#faq">FAQ</a>
           <a href="#pricing">料金</a>
         </div>
-        <a href="#cta" className="lp-nav-cta">
-          無料ではじめる <span className="arrow">→</span>
-        </a>
+        <div className="lp-nav-actions">
+          <Link href="/login" className="lp-nav-login">ログイン</Link>
+          <a href="#cta" className="lp-nav-cta">
+            無料ではじめる <span className="arrow">→</span>
+          </a>
+        </div>
       </nav>
 
       {/* ─── HERO ─── */}
