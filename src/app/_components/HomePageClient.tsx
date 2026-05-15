@@ -6,12 +6,9 @@ import { PRO_PRICE_JPY } from "@/config/plans";
 import "@/app/lp.css";
 
 const MARQUEE_ITEMS: [string, string][] = [
-  ["エントリーシート", "23:59"],
-  ["説明会", "5月14日"],
-  ["面接", "一次／二次／最終"],
-  ["本日締切", "TODAY"],
-  ["72時間前", "NOTIFY"],
-  ["寝落ち、なし", "NEVER MISS"],
+  ["エントリーシート（ES）", ""],
+  ["説明会", ""],
+  ["面接 一次／二次／最終", ""],
 ];
 
 const FREE_LIST = [
@@ -31,9 +28,9 @@ const PRO_LIST = [
 
 const URG_CARDS = [
   { cls: "overdue", off: 0,   label: "● Overdue ／ 期限切れ", title: "取り逃した。",  desc: "過ぎた時間はゼロにできない。だから〆トラは、過ぎる前に止める設計。", n: "−02h", u: "過ぎた" },
-  { cls: "today",   off: 32,  label: "● Today ／ 当日",       title: "今日が、勝負。", desc: "濃いオレンジで、視界の中心に。寝落ちする前に、確実に呼び戻す。",     n: "07h",  u: "あと" },
-  { cls: "soon",    off: 160, label: "● Soon ／ 3日以内",     title: "視界の端へ。",  desc: "準備期間。落ち着いた黄色で、近づいていることだけを知らせる。",       n: "2d",   u: "あと" },
-  { cls: "normal",  off: 260, label: "● Normal ／ 通常",      title: "まだ、余裕。",  desc: "ブランドの紺で、リストの背景に。今日は、別のことに集中していい。",   n: "11d",  u: "あと" },
+  { cls: "today",   off: 32,  label: "● Today ／ 当日",       title: "今日が勝負。",  desc: "濃いオレンジで、視界の中心に。寝落ちする前に、確実に呼び戻す。",     n: "07h",  u: "あと" },
+  { cls: "soon",    off: 160, label: "● Soon ／ 3日以内",     title: "準備する。",    desc: "落ち着いた黄色で、近づいていることだけを知らせる。",                 n: "2d",   u: "あと" },
+  { cls: "normal",  off: 260, label: "● Normal ／ 通常",      title: "まだ余裕。",    desc: "ブランドの紺で、リストの背景に。今日は、別のことに集中していい。",   n: "11d",  u: "あと" },
 ];
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -271,12 +268,12 @@ export function HomePageClient() {
           <div className="lp-hero-left">
             <div className="lp-eyebrow">
               <span className="dot" />
-              2026 新卒 / 第二新卒 のための締切ノート
+              就活 のための締切管理ノート
             </div>
 
             <h1 className="lp-hero-title">
-              <span className="line"><span className="word">出さなきゃ、を</span></span>
-              <span className="line"><span className="word"><em>出した</em>に。</span></span>
+              <span className="line"><span className="word">就活の締め切り管理を</span></span>
+              <span className="line"><span className="word"><em>これ一つで。</em></span></span>
               <span className="line"><span className="word"><span className="accent">〆トラ。</span></span></span>
             </h1>
 
@@ -294,7 +291,6 @@ export function HomePageClient() {
 
             <div className="lp-hero-bullets">
               <span className="lp-hero-bullet">アプリDL不要</span>
-              <span className="lp-hero-bullet">マジックリンク認証</span>
               <span className="lp-hero-bullet">10件まで無料・広告なし</span>
             </div>
           </div>
@@ -302,30 +298,6 @@ export function HomePageClient() {
           {/* 右: フォンモックアップ */}
           <div className="lp-hero-right" ref={heroRightRef}>
             <span className="lp-hero-mark" ref={heroMarkRef} aria-hidden="true">〆</span>
-
-            <div className="lp-hero-chip chip-1">
-              <span className="dot" />
-              <div>
-                <strong>残り 23:59:42</strong>
-                <span>ES ・ Recruit Holdings</span>
-              </div>
-            </div>
-
-            <div className="lp-hero-chip chip-3">
-              <span className="dot" />
-              <div>
-                <strong>提出完了</strong>
-                <span>freee ・ ES</span>
-              </div>
-            </div>
-
-            <div className="lp-hero-chip chip-2">
-              <span className="dot" />
-              <div>
-                <strong>メール通知 → 72h前</strong>
-                <span>メルカリ ・ 面接</span>
-              </div>
-            </div>
 
             <div className="lp-phone" ref={phoneRef}>
               <div className="lp-phone-notch" />
@@ -345,7 +317,7 @@ export function HomePageClient() {
                 </div>
                 <div className="lp-phone-body">
                   <div className="lp-phone-greeting">
-                    こんにちは、<span className="accent">悠真</span> さん。
+                    今日の締切は<span className="accent">3件</span>あります。
                   </div>
                   <div className="lp-phone-hero">
                     <div className="lbl">次の〆切まで</div>
@@ -414,8 +386,7 @@ export function HomePageClient() {
               逃してませんか。
             </h2>
             <p>
-              志望度の高い企業ほど、ESも面接も日程が密集する。Excel・カレンダー・メール・
-              各社のマイページ、情報源がバラけるほど、いちばん大事な一行が抜け落ちる。
+              志望度の高い企業ほど、ESも面接も日程が密集する。Excel・カレンダー・メール・各社のマイページ、情報源がバラけるほど、管理が難しくなり、うっかり締め切りを忘れてしまうリスクが高まります。
             </p>
           </div>
 
@@ -450,13 +421,13 @@ export function HomePageClient() {
         <div className="lp-how-head" data-reveal="">
           <div className="lp-eyebrow"><span className="dot" />How it works ／ 3 STEPS</div>
           <h2>メール一通で、<br /><em>締切を、見張る側に。</em></h2>
-          <p>アプリのダウンロードは要りません。マジックリンクでログインして、締切を3つ登録するだけ。</p>
+          <p>アプリのダウンロードは要りません。マジックリンクでログインして、締切を登録するだけで、締め切りをメールで通知します。</p>
         </div>
 
         <div className="lp-how-steps">
           <article className="lp-step" data-reveal="">
             <div className="lp-step-num">STEP / 01 <span className="arrow">→</span></div>
-            <h3>大学のメールで、マジックリンク認証。</h3>
+            <h3>メールで登録。</h3>
             <p>パスワードもアプリも不要。〆トラから届くワンタップのリンクで、すぐにダッシュボードへ。</p>
             <div className="lp-step-visual">
               <div className="lp-sv-email">
@@ -474,8 +445,8 @@ export function HomePageClient() {
 
           <article className="lp-step" data-reveal="">
             <div className="lp-step-num">STEP / 02 <span className="arrow">→</span></div>
-            <h3>締切を、3 タップで登録。</h3>
-            <p>企業名・種別・日時。種別はタイル選択、日時は「今夜23:59」などのクイックボタンから。</p>
+            <h3>締切を登録。</h3>
+            <p>企業名・種別・日時・メモを登録。</p>
             <div className="lp-step-visual">
               <div className="lp-sv-form">
                 <div className="lp-sv-field">
@@ -549,7 +520,7 @@ export function HomePageClient() {
           </div>
           <p data-reveal="">
             締切までの残り時間で、自動的に色が変わります。赤＝期限切れ、橙＝当日、黄＝3日以内、紺＝通常。
-            円形プログレスは、〆切までの「容量」が埋まっていく感覚を表現します。
+            円形プログレスで視覚的にも残り時間がわかります。
           </p>
         </div>
 
