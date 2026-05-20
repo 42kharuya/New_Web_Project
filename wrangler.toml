@@ -1,23 +1,4 @@
 # Cloudflare Workers 設定
-# worker.ts が opennextjs-cloudflare の worker.js をラップし scheduled ハンドラを追加する
-# see: https://opennext.js.org/cloudflare
-#
-# ── デプロイ手順 ────────────────────────────────────────────────────
-#   1. npm run build:cloudflare   (opennextjs-cloudflare build)
-#   2. シークレット登録（初回のみ）:
-#        wrangler secret put DATABASE_URL
-#        wrangler secret put AUTH_SECRET
-#        wrangler secret put APP_URL
-#        wrangler secret put RESEND_API_KEY
-#        wrangler secret put EMAIL_FROM
-#        wrangler secret put STRIPE_SECRET_KEY
-#        wrangler secret put STRIPE_PRICE_ID
-#        wrangler secret put STRIPE_WEBHOOK_SECRET
-#        wrangler secret put CRON_SECRET
-#        wrangler secret put UPSTASH_REDIS_REST_URL
-#        wrangler secret put UPSTASH_REDIS_REST_TOKEN   (レート制限有効時)
-#   3. npm run deploy              (wrangler deploy)
-# -------------------------------------------------------------------
 
 name = "job-hunt-tracker"
 main = "worker.ts"
@@ -28,15 +9,13 @@ compatibility_flags = ["nodejs_compat"]
 directory = ".open-next/assets"
 binding = "ASSETS"
 
-# ── 公開可能な環境変数（非機密） ─────────────────────────────────────
-# 機密情報は [vars] に書かず wrangler secret put で登録すること
+# 非機密のランタイム変数（機密情報は Cloudflare ダッシュボードで設定）
 [vars]
 APP_ENV = "production"
 EMAIL_PROVIDER = "resend"
 MAGIC_LINK_EXPIRY_MINUTES = "30"
-ANALYTICS_PROVIDER = "console"
+ANALYTICS_PROVIDER = "posthog"
 
-# Cron トリガー: 10分ごとに /api/cron/notify を呼び出す
-# 本番環境は Cloudflare Dashboard の Triggers タブでも管理可能
+# Cron: 10分ごとに /api/cron/notify を実行
 [triggers]
 crons = ["*/10 * * * *"]
