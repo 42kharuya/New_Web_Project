@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { GtmScript } from "./_components/GtmScript";
 import { ConditionalHeader } from "./_components/ConditionalHeader";
 import { ConditionalFooter } from "./_components/ConditionalFooter";
+import { PostHogProvider } from "./_components/PostHogProvider";
 import { getSession } from "@/features/auth/session";
 import "./globals.css";
 
@@ -26,9 +27,11 @@ export default async function RootLayout({
       <body className="font-sans flex min-h-screen flex-col">
         {/* GTM スクリプト: body 先頭に配置（noscript フォールバック含む） */}
         <GtmScript />
-        {session && <ConditionalHeader email={session.email} />}
-        <div className="flex-1">{children}</div>
-        <ConditionalFooter />
+        <PostHogProvider>
+          {session && <ConditionalHeader email={session.email} />}
+          <div className="flex-1">{children}</div>
+          <ConditionalFooter />
+        </PostHogProvider>
       </body>
     </html>
   );

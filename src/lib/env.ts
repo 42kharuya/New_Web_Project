@@ -44,7 +44,7 @@ export const envSchema = z
     ),
     ANALYTICS_PROVIDER: z.preprocess(
       (v) => (v === "" ? undefined : v),
-      z.enum(["console", "segment"]).default("console"),
+      z.enum(["console", "segment", "posthog"]).default("console"),
     ),
     NODE_ENV: z.preprocess(
       (v) => (v === "" ? undefined : v),
@@ -87,6 +87,18 @@ export const envSchema = z
         code: z.ZodIssueCode.custom,
         path: ["ANALYTICS_WRITE_KEY"],
         message: "ANALYTICS_PROVIDER=segment のとき ANALYTICS_WRITE_KEY は必須です",
+      });
+    }
+    // ANALYTICS_PROVIDER=posthog のとき NEXT_PUBLIC_POSTHOG_KEY が必須
+    // （NEXT_PUBLIC_ 変数は process.env 経由でサーバーサイドからも参照可能）
+    if (
+      data.ANALYTICS_PROVIDER === "posthog" &&
+      !process.env.NEXT_PUBLIC_POSTHOG_KEY
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["NEXT_PUBLIC_POSTHOG_KEY"],
+        message: "ANALYTICS_PROVIDER=posthog のとき NEXT_PUBLIC_POSTHOG_KEY は必須です",
       });
     }
   });
@@ -183,8 +195,10 @@ export const env = {
   },
 
   /** 計測プロバイダ（デフォルト: "console"） */
-  get ANALYTICS_PROVIDER(): "console" | "segment" {
-    return process.env.ANALYTICS_PROVIDER === "segment" ? "segment" : "console";
+  get ANALYTICS_PROVIDER(): "console" | "segment" | "posthog" {
+    if (process.env.ANALYTICS_PROVIDER === "segment") return "segment";
+    if (process.env.ANALYTICS_PROVIDER === "posthog") return "posthog";
+    return "console";
   },
 
   /** Node 環境（デフォルト: "development"） */

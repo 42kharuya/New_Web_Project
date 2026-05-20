@@ -6,11 +6,14 @@
  * - イベント名は snake_case（ANALYTICS_SPEC.md 準拠）
  *
  * 環境変数:
- *  ANALYTICS_PROVIDER : "console" (デフォルト) | "segment"
- *  ANALYTICS_WRITE_KEY: Segment Write Key（ANALYTICS_PROVIDER=segment のとき必須）
+ *  ANALYTICS_PROVIDER  : "console" (デフォルト) | "segment" | "posthog"
+ *  ANALYTICS_WRITE_KEY : Segment Write Key（ANALYTICS_PROVIDER=segment のとき必須）
+ *  NEXT_PUBLIC_POSTHOG_KEY : PostHog API キー（ANALYTICS_PROVIDER=posthog のとき必須）
+ *  NEXT_PUBLIC_POSTHOG_HOST: PostHog ホスト URL（任意、デフォルト: https://app.posthog.com）
  */
 
 import { env } from "@/lib/env";
+import { getServerPostHog } from "@/lib/posthog";
 
 // ---------------------------------------------------------------
 // イベント型定義（ANALYTICS_SPEC.md に対応）
@@ -42,11 +45,98 @@ export interface PurchaseEvent {
   currency: string;
 }
 
+export interface DeadlineCreatedEvent {
+  name: "deadline_created";
+  userId: string;
+  kind: string;
+}
+
+export interface DeadlineUpdatedEvent {
+  name: "deadline_updated";
+  userId: string;
+  kind: string;
+}
+
+export interface DeadlineDeletedEvent {
+  name: "deadline_deleted";
+  userId: string;
+}
+
+// ---------------------------------------------------------------
+// LP 計測イベント型定義（クライアントサイド / dataLayer.push() 専用）
+// docs/LP.md § GA4 / GTM イベント設計表 に対応
+//
+// これらは GTM 経由で GA4 / Clarity に流すため、
+// サーバーサイドの trackEvent() ではなく window.dataLayer.push() で使う。
+// ---------------------------------------------------------------
+
+/** LP 表示時 */
+export interface LpViewedEvent {
+  event: "lp_viewed";
+  page_type: "lp";
+  page_path: string;
+  page_title: string;
+  device_type: "mobile" | "tablet" | "desktop";
+}
+
+/** Hero CTA クリック時 */
+export interface LpPrimaryCtaClickedEvent {
+  event: "lp_primary_cta_clicked";
+  cta_location: "hero";
+  cta_label: string;
+  page_type: "lp";
+}
+
+/** 下部 CTA クリック時 */
+export interface LpSecondaryCtaClickedEvent {
+  event: "lp_secondary_cta_clicked";
+  cta_location: "bottom";
+  cta_label: string;
+  page_type: "lp";
+}
+
+/** 先行登録モーダル表示時 */
+export interface LpWaitlistFormOpenedEvent {
+  event: "lp_waitlist_form_opened";
+  open_source: "hero" | "bottom";
+  page_type: "lp";
+}
+
+/** フォーム送信成功時（メールアドレス・本文は含めない） */
+export interface LpWaitlistSubmittedEvent {
+  event: "lp_waitlist_submitted";
+  form_type: "waitlist";
+  graduation_year: number;
+  hearing_opt_in: boolean | null;
+  page_type: "lp";
+}
+
+/** フォーム送信失敗時 */
+export interface LpWaitlistSubmitFailedEvent {
+  event: "lp_waitlist_submit_failed";
+  form_type: "waitlist";
+  /** "validation" | "duplicate" | "api_error" | "network_error" */
+  error_type: string;
+  page_type: "lp";
+}
+
+/** LP 計測イベントのユニオン型（dataLayer.push() の引数に使う） */
+export type LpDataLayerEvent =
+  | LpViewedEvent
+  | LpPrimaryCtaClickedEvent
+  | LpSecondaryCtaClickedEvent
+  | LpWaitlistFormOpenedEvent
+  | LpWaitlistSubmittedEvent
+  | LpWaitlistSubmitFailedEvent;
+
 export type AnalyticsEvent =
   | SignupEvent
   | ActivationEvent
   | DashboardViewedEvent
-  | PurchaseEvent;
+  | PurchaseEvent
+  | DeadlineCreatedEvent
+  | DeadlineUpdatedEvent
+  | DeadlineDeletedEvent;
 
 // ---------------------------------------------------------------
 // 公開 API
@@ -96,7 +186,38 @@ async function doTrack(event: AnalyticsEvent): Promise<void> {
     return;
   }
 
+  if (provider === "posthog") {
+    await trackPostHog(event);
+    return;
+  }
+
   console.warn("[analytics] unknown ANALYTICS_PROVIDER: %s", provider);
+}
+
+/**
+ * PostHog Node SDK を使ってサーバーサイドからイベントを送信する。
+ *
+ * @see https://posthog.com/docs/libraries/node
+ */
+async function trackPostHog(event: AnalyticsEvent): Promise<void> {
+  const ph = getServerPostHog();
+  if (!ph) {
+    console.warn(
+      "[analytics] NEXT_PUBLIC_POSTHOG_KEY is not set. Skipping PostHog track.",
+    );
+    return;
+  }
+
+  const { name, userId, ...properties } = event;
+  ph.capture({
+    distinctId: userId,
+    event: name,
+    properties,
+  });
+
+  // flushAt=1 / flushInterval=0 のため即座に送信されるが、
+  // サーバーレス環境でのリクエスト終了前に確実にフラッシュする
+  await ph.flush();
 }
 
 /**
