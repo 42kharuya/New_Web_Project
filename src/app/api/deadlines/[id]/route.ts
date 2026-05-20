@@ -32,6 +32,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { validateUpdateDeadline } from "@/features/deadlines/validate";
+import { trackEvent } from "@/features/analytics";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -86,6 +87,13 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       },
     });
 
+    // deadline_updated イベント送信
+    await trackEvent({
+      name: "deadline_updated",
+      userId,
+      kind: item.kind,
+    });
+
     return NextResponse.json({ ok: true, item });
   } catch (err) {
     console.error("[PATCH /api/deadlines/:id] unexpected error:", err);
@@ -121,6 +129,12 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
 
     // 3. 削除
     await prisma.deadlineItem.delete({ where: { id } });
+
+    // deadline_deleted イベント送信
+    await trackEvent({
+      name: "deadline_deleted",
+      userId,
+    });
 
     return NextResponse.json({ ok: true });
   } catch (err) {

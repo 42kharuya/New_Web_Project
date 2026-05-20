@@ -6,11 +6,14 @@
  * - イベント名は snake_case（ANALYTICS_SPEC.md 準拠）
  *
  * 環境変数:
- *  ANALYTICS_PROVIDER : "console" (デフォルト) | "segment"
- *  ANALYTICS_WRITE_KEY: Segment Write Key（ANALYTICS_PROVIDER=segment のとき必須）
+ *  ANALYTICS_PROVIDER  : "console" (デフォルト) | "segment" | "posthog"
+ *  ANALYTICS_WRITE_KEY : Segment Write Key（ANALYTICS_PROVIDER=segment のとき必須）
+ *  NEXT_PUBLIC_POSTHOG_KEY : PostHog API キー（ANALYTICS_PROVIDER=posthog のとき必須）
+ *  NEXT_PUBLIC_POSTHOG_HOST: PostHog ホスト URL（任意、デフォルト: https://app.posthog.com）
  */
 
 import { env } from "@/lib/env";
+import { getServerPostHog } from "@/lib/posthog";
 
 // ---------------------------------------------------------------
 // イベント型定義（ANALYTICS_SPEC.md に対応）
@@ -40,6 +43,23 @@ export interface PurchaseEvent {
   plan: string;
   amount: number;
   currency: string;
+}
+
+export interface DeadlineCreatedEvent {
+  name: "deadline_created";
+  userId: string;
+  kind: string;
+}
+
+export interface DeadlineUpdatedEvent {
+  name: "deadline_updated";
+  userId: string;
+  kind: string;
+}
+
+export interface DeadlineDeletedEvent {
+  name: "deadline_deleted";
+  userId: string;
 }
 
 // ---------------------------------------------------------------
@@ -113,7 +133,10 @@ export type AnalyticsEvent =
   | SignupEvent
   | ActivationEvent
   | DashboardViewedEvent
-  | PurchaseEvent;
+  | PurchaseEvent
+  | DeadlineCreatedEvent
+  | DeadlineUpdatedEvent
+  | DeadlineDeletedEvent;
 
 // ---------------------------------------------------------------
 // 公開 API
@@ -163,7 +186,38 @@ async function doTrack(event: AnalyticsEvent): Promise<void> {
     return;
   }
 
+  if (provider === "posthog") {
+    await trackPostHog(event);
+    return;
+  }
+
   console.warn("[analytics] unknown ANALYTICS_PROVIDER: %s", provider);
+}
+
+/**
+ * PostHog Node SDK を使ってサーバーサイドからイベントを送信する。
+ *
+ * @see https://posthog.com/docs/libraries/node
+ */
+async function trackPostHog(event: AnalyticsEvent): Promise<void> {
+  const ph = getServerPostHog();
+  if (!ph) {
+    console.warn(
+      "[analytics] NEXT_PUBLIC_POSTHOG_KEY is not set. Skipping PostHog track.",
+    );
+    return;
+  }
+
+  const { name, userId, ...properties } = event;
+  ph.capture({
+    distinctId: userId,
+    event: name,
+    properties,
+  });
+
+  // flushAt=1 / flushInterval=0 のため即座に送信されるが、
+  // サーバーレス環境でのリクエスト終了前に確実にフラッシュする
+  await ph.flush();
 }
 
 /**

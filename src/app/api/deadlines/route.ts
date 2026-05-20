@@ -89,7 +89,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 5. Activation チェック（サインアップ後24h以内に2件作成した瞬間に1回だけ）
+    // 5. deadline_created イベント送信
+    await trackEvent({
+      name: "deadline_created",
+      userId,
+      kind,
+    });
+
+    // 6. Activation チェック（サインアップ後24h以内に2件作成した瞬間に1回だけ）
     await checkAndTrackActivation(userId, item.createdAt);
 
     return NextResponse.json({ ok: true, item }, { status: 201 });
