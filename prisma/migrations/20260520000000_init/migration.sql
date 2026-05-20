@@ -1,6 +1,3 @@
--- ADR 0002: MVPのデータモデル（最小スキーマ）に準拠
--- 4テーブル + enum + インデックス / 一意制約
-
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 
@@ -71,23 +68,41 @@ CREATE TABLE "notification_deliveries" (
     CONSTRAINT "notification_deliveries_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex: users.email 一意制約
+-- CreateTable
+CREATE TABLE "magic_link_tokens" (
+    "id" UUID NOT NULL,
+    "email" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "expires_at" TIMESTAMPTZ NOT NULL,
+    "used_at" TIMESTAMPTZ,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "magic_link_tokens_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
--- CreateIndex: deadline_items(user_id, deadline_at) 複合インデックス（AC）
+-- CreateIndex
 CREATE INDEX "idx_deadline_items_user_id_deadline_at" ON "deadline_items"("user_id", "deadline_at");
 
--- CreateIndex: subscriptions.user_id 一意制約
+-- CreateIndex
 CREATE UNIQUE INDEX "subscriptions_user_id_key" ON "subscriptions"("user_id");
 
--- CreateIndex: subscriptions.stripe_customer_id 一意制約
+-- CreateIndex
 CREATE UNIQUE INDEX "subscriptions_stripe_customer_id_key" ON "subscriptions"("stripe_customer_id");
 
--- CreateIndex: subscriptions.stripe_subscription_id 一意制約
+-- CreateIndex
 CREATE UNIQUE INDEX "subscriptions_stripe_subscription_id_key" ON "subscriptions"("stripe_subscription_id");
 
--- CreateIndex: notification_deliveries(deadline_item_id, offset_minutes) 一意制約（重複送信防止 AC）
-CREATE UNIQUE INDEX "uq_notification_deliveries_item_offset" ON "notification_deliveries"("deadline_item_id", "offset_minutes");
+-- CreateIndex
+CREATE UNIQUE INDEX "notification_deliveries_deadline_item_id_offset_minutes_key" ON "notification_deliveries"("deadline_item_id", "offset_minutes");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "magic_link_tokens_token_key" ON "magic_link_tokens"("token");
+
+-- CreateIndex
+CREATE INDEX "magic_link_tokens_email_idx" ON "magic_link_tokens"("email");
 
 -- AddForeignKey
 ALTER TABLE "deadline_items" ADD CONSTRAINT "deadline_items_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -97,3 +112,4 @@ ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_user_id_fkey" FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE "notification_deliveries" ADD CONSTRAINT "notification_deliveries_deadline_item_id_fkey" FOREIGN KEY ("deadline_item_id") REFERENCES "deadline_items"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
