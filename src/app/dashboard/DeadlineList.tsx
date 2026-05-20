@@ -70,16 +70,23 @@ export default function DeadlineList({ initialItems, totalCount }: Props) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterState>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
   const filteredItems = items.filter((item) => {
-    if (filter === "todo") return item.status === "todo";
-    if (filter === "done")
-      return (
-        item.status === "done" ||
-        item.status === "submitted" ||
-        item.status === "canceled"
-      );
-    return true;
+    if (filter === "todo" && item.status !== "todo") return false;
+    if (
+      filter === "done" &&
+      item.status !== "done" &&
+      item.status !== "submitted" &&
+      item.status !== "canceled"
+    )
+      return false;
+    if (normalizedQuery === "") return true;
+    return (
+      item.companyName.toLowerCase().includes(normalizedQuery) ||
+      (item.memo ?? "").toLowerCase().includes(normalizedQuery)
+    );
   });
 
   async function handleStatusChange(id: string, newStatus: string) {
@@ -191,6 +198,15 @@ export default function DeadlineList({ initialItems, totalCount }: Props) {
         </div>
       </div>
 
+      {/* キーワード検索 */}
+      <input
+        type="search"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="会社名・メモで検索"
+        className="mb-3 w-full rounded-xl border border-[var(--rule)] bg-[var(--card)] px-3 py-2 text-sm outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-brand focus:ring-2 focus:ring-brand/20"
+      />
+
       {errorMsg && (
         <div
           role="alert"
@@ -202,7 +218,9 @@ export default function DeadlineList({ initialItems, totalCount }: Props) {
 
       {filteredItems.length === 0 ? (
         <div className="mt-8 py-12 text-center text-sm text-[var(--ink-4)]">
-          該当する締切はありません
+          {normalizedQuery !== ""
+            ? `"${searchQuery.trim()}" に一致する締切はありません`
+            : "該当する締切はありません"}
         </div>
       ) : (
         <motion.ul
