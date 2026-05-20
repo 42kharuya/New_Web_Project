@@ -89,18 +89,9 @@ export const envSchema = z
         message: "ANALYTICS_PROVIDER=segment のとき ANALYTICS_WRITE_KEY は必須です",
       });
     }
-    // ANALYTICS_PROVIDER=posthog のとき NEXT_PUBLIC_POSTHOG_KEY が必須
-    // （NEXT_PUBLIC_ 変数は process.env 経由でサーバーサイドからも参照可能）
-    if (
-      data.ANALYTICS_PROVIDER === "posthog" &&
-      !process.env.NEXT_PUBLIC_POSTHOG_KEY
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["NEXT_PUBLIC_POSTHOG_KEY"],
-        message: "ANALYTICS_PROVIDER=posthog のとき NEXT_PUBLIC_POSTHOG_KEY は必須です",
-      });
-    }
+    // NEXT_PUBLIC_POSTHOG_KEY はビルド時にクライアントバンドルへ焼き込まれる変数のため
+    // Cloudflare Workers のサーバー runtime では process.env から参照できない。
+    // 起動時バリデーションの対象から除外し、getServerPostHog() の null チェックに委ねる。
   });
 
 // ── 一括バリデーション（起動時フェイルファスト） ──────────────────────────────
