@@ -17,6 +17,9 @@ MAGIC_LINK_EXPIRY_MINUTES = "30"
 ANALYTICS_PROVIDER = "posthog"
 SENTRY_ORG = "kharuya"
 SENTRY_PROJECT = "shimetra"
+NEXT_PUBLIC_POSTHOG_KEY = "phc_rMNunbFAyC7XRtnvTMuY2ZyqCzU26cEsgCxtWGtZrrbd"
+NEXT_PUBLIC_POSTHOG_HOST = "https://app.posthog.com"
+NEXT_PUBLIC_SENTRY_DSN = "https://b908643db8df2eeedb19c484a43d9499@o4511423479545856.ingest.us.sentry.io/4511423486558208"
 
 # Cron: 10分ごとに /api/cron/notify を実行
 [triggers]
