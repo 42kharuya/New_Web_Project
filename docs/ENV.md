@@ -10,9 +10,9 @@
 | `APP_ENV`（非機密の固定値）                   | `wrangler.toml`                 | `.env.local` | —                  |
 | `EMAIL_PROVIDER`（非機密の固定値）            | `wrangler.toml`                 | `.env.local` | —                  |
 | `MAGIC_LINK_EXPIRY_MINUTES`（非機密の固定値） | `wrangler.toml`                 | `.env.local` | —                  |
-| `APP_URL`（非機密の固定値）                   | CF シークレット                 | `.env.local` | —                  |
-| `EMAIL_FROM`（非機密の固定値）                | CF シークレット                 | `.env.local` | —                  |
-| `STRIPE_PRICE_ID`（非機密の固定値）           | CF シークレット                 | `.env.local` | `ci.yml`（ダミー） |
+| `APP_URL`（非機密の固定値）                   | `wrangler.toml`                 | `.env.local` | —                  |
+| `EMAIL_FROM`（非機密の固定値）                | `wrangler.toml`                 | `.env.local` | —                  |
+| `STRIPE_PRICE_ID`（非機密の固定値）           | `wrangler.toml`                 | `.env.local` | `ci.yml`（ダミー） |
 | `DATABASE_URL`（機密情報）                    | CF シークレット                 | `.env.local` | `ci.yml`（ダミー） |
 | `DATABASE_URL_UNPOOLED`（機密情報）           | CF シークレット                 | `.env.local` | —                  |
 | `AUTH_SECRET`（機密情報）                     | CF シークレット                 | `.env.local` | `ci.yml`（ダミー） |
