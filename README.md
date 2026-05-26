@@ -7,7 +7,7 @@
 
 <!-- スクリーンショット: ダッシュボード全体 -->
 
-![ダッシュボード](public/images/screenshot-dashboard.png)
+![LP](docs/images/screenshot-lp.png)
 
 ## 技術スタック
 
@@ -60,19 +60,25 @@
 
 <!-- スクリーンショット: ログイン画面 -->
 
-![ログイン](public/images/screenshot-login.png)
+![ログイン](docs/images/screenshot-login.png)
+
+### ダッシュボード
+
+<!-- スクリーンショット: ダッシュボード -->
+
+![ダッシュボード](docs/images/screenshot-dashboard.png)
 
 ### 締切登録
 
 <!-- スクリーンショット: 締切登録フォーム -->
 
-![締切登録](public/images/screenshot-new.png)
+![締切登録](docs/images/screenshot-new.png)
 
 ### 課金・プラン
 
 <!-- スクリーンショット: 課金ページ -->
 
-![課金ページ](public/images/screenshot-billing.png)
+![課金ページ](docs/images/screenshot-billing.png)
 
 ## ローカル起動
 
