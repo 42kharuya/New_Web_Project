@@ -1,126 +1,112 @@
-# Runbook（〆トラ）
+# Runbook — 〆トラ
 
-MVP の運用・障害対応・ロールバック手順を 1 ページにまとめる。
-詳細ポストモーテムは [docs/POSTMORTEM_TEMPLATE.md](POSTMORTEM_TEMPLATE.md) を利用すること。
+運用・障害対応・ロールバックの手順書。
 
----
+## 1. 守るべき最重要導線
 
-## 1. 最重要導線（守るもの）
+| 優先度 | 導線                                        | 壊れたときの影響             |
+| ------ | ------------------------------------------- | ---------------------------- |
+| 🔴 S1  | ログイン（マジックリンク → セッション発行） | 全ユーザーがアクセス不能     |
+| 🔴 S1  | Stripe Webhook（`/api/stripe/webhook`）     | 課金状態が DB に反映されない |
+| 🔴 S1  | 通知 Cron（`/api/cron/notify`）             | 締切前メールが届かない       |
+| 🟡 S2  | 締切 CRUD（`/api/deadlines`）               | コア体験が使えない           |
+| 🟡 S2  | Stripe Checkout（`/api/stripe/checkout`）   | アップグレードができない     |
 
-| 優先度 | 導線                                            | 壊れたときの影響             |
-| ------ | ----------------------------------------------- | ---------------------------- |
-| S1     | ログイン（マジックリンク送付 → セッション発行） | 全ユーザーがアクセス不能     |
-| S1     | Stripe Webhook 受信（`/api/stripe/webhook`）    | 課金状態が DB に反映されない |
-| S1     | 通知 Cron（`/api/cron/notify`）                 | 締切前メールが届かない       |
-| S2     | 締切登録/更新（`/api/deadlines`）               | コア体験が使えない           |
-| S2     | Stripe Checkout（`/api/stripe/checkout`）       | アップグレードができない     |
+## 2. ログの確認場所
 
----
+| 何を調べるか                          | どこを見るか                                                            |
+| ------------------------------------- | ----------------------------------------------------------------------- |
+| API / Cron / Webhook のリクエストログ | Cloudflare Dashboard → Workers & Pages → `job-hunt-tracker` → **Logs**  |
+| クライアントエラー                    | [Sentry](https://sentry.io) → Issues                                    |
+| ユーザー行動・イベント                | [PostHog](https://app.posthog.com) → Events                             |
+| メール送信結果                        | [Resend](https://resend.com) → Logs                                     |
+| 通知の送信状態                        | DB → `notification_deliveries` テーブル（`status` = `sent` / `failed`） |
+| 課金状態                              | DB → `subscriptions` テーブル ＋ Stripe Dashboard → Events              |
 
-## 2. シークレット管理（Cron / Webhook）
+## 3. 障害の一次切り分け
 
-### 設定場所
-
-| 変数                    | 本番設定先                                  | 備考                                                      |
-| ----------------------- | ------------------------------------------- | --------------------------------------------------------- |
-| `CRON_SECRET`           | `wrangler secret put CRON_SECRET`           | 生成: `openssl rand -base64 32`                           |
-| `STRIPE_WEBHOOK_SECRET` | `wrangler secret put STRIPE_WEBHOOK_SECRET` | Stripe Dashboard > Developers > Webhooks > Signing secret |
-| `STRIPE_SECRET_KEY`     | `wrangler secret put STRIPE_SECRET_KEY`     | `sk_live_xxxxx`（本番は live キーを使う）                 |
-| `AUTH_SECRET`           | `wrangler secret put AUTH_SECRET`           | 生成: `openssl rand -base64 32`                           |
-
-### ローカル vs 本番
-
-| 環境               | Cron 実行                                                                                                                           | Webhook 受信                                                                                        |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| ローカル           | `curl -X POST http://localhost:8787/api/cron/notify -H "Authorization: Bearer <CRON_SECRET>"`                                       | `stripe listen --forward-to localhost:8787/api/stripe/webhook`（`whsec_xxx` が出る）                |
-| Cloudflare Workers | `wrangler.toml` の `[triggers] crons` 設定で自動呼び出し。`CRON_SECRET` は `wrangler secret put` で設定済みのシークレットを参照する | Stripe Dashboard に `https://<APP_URL>/api/stripe/webhook` を登録し、`STRIPE_WEBHOOK_SECRET` を設定 |
-
-### シークレットローテーション手順
-
-1. 新しいシークレットを生成（`openssl rand -base64 32`）
-2. `wrangler secret put <VAR_NAME>` で本番シークレットを更新し、`npm run deploy` で再デプロイ
-3. Stripe Webhook の場合: 旧エンドポイントを残したまま新エンドポイントを追加 → 動作確認後に旧を削除
-4. ローカル `.env` を更新
-
----
-
-## 3. ログの場所
-
-| ログ種別                        | 確認場所                                                                                                                   |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| API / Cron / Webhook の実行ログ | Cloudflare Dashboard > Workers & Pages > [project] > **Logs** タブ（`/api/cron/notify`, `/api/stripe/webhook` でフィルタ） |
-| メール送信ログ                  | 同 Logs タブで `sendEmail` or `EMAIL_PROVIDER` で検索                                                                      |
-| エラー監視                      | Sentry（`SENTRY_DSN` 設定時）または Cloudflare Workers Logs の `level:error` フィルタ                                      |
-| 通知送信結果                    | DB > `notification_deliveries` テーブル（`status` = `sent` / `failed`, `error` カラム）                                    |
-| 課金状態                        | DB > `subscriptions` テーブル + Stripe Dashboard > Events                                                                  |
-
----
-
-## 4. 一次切り分け（障害発生時）
-
-### 4-1. Cron 通知が届かない
+### 🔴 ログイン（マジックリンク）が届かない
 
 ```
-1. Cloudflare Dashboard > Workers & Pages > [project] > Logs で POST /api/cron/notify の実行を確認
-   → 実行されていない: wrangler.toml の [triggers] crons 設定と CRON_SECRET（wrangler secret）を確認
-   → 500 エラー: ログ詳細で DB 接続 / メール送信エラーを確認
+Resend Dashboard > Logs でメール送信状態を確認
+  → failed: RESEND_API_KEY か EMAIL_FROM の設定を確認
+  → delivered: スパムフォルダを確認
 
-2. DB で notification_deliveries を確認
-   → status=failed: error カラムにエラー詳細あり
-   → レコードなし: Cron 自体が未実行 or 抽出クエリのバグ
-
-3. メール送信側の確認
-   → EMAIL_PROVIDER=resend の場合: Resend Dashboard > Logs で送信状態を確認
-
-4. 手動再実行（冪等設計 = 再実行しても二重送信しない）:
-   curl -X POST https://<APP_URL>/api/cron/notify \
-     -H "Authorization: Bearer <CRON_SECRET>"
+CF Logs で POST /api/auth/magic-link を確認
+  → 500: RESEND_API_KEY / DATABASE_URL の環境変数を確認
 ```
 
-### 4-2. Stripe Webhook が反映されない
+### 🔴 Stripe Webhook が反映されない
 
 ```
-1. Stripe Dashboard > Developers > Webhooks > イベント履歴を確認
-   → 失敗: レスポンスコードと本文を確認
-   → 未送信: エンドポイント URL と有効化状態を確認
+Stripe Dashboard > Developers > Webhooks > イベント履歴を確認
+  → 未送信:  エンドポイント URL と有効化状態を確認
+  → 失敗:    CF Logs で POST /api/stripe/webhook を確認
+               → 400: STRIPE_WEBHOOK_SECRET が正しいか確認
+               → 500: DB 接続エラーの可能性
 
-2. Cloudflare Dashboard > Workers & Pages > [project] > Logs で POST /api/stripe/webhook の実行を確認
-   → 400: 署名検証失敗 → STRIPE_WEBHOOK_SECRET が本番用の値か確認
-   → 500: DB 接続 or Prisma エラーの可能性
-
-3. Stripe から手動 Resend:
-   Stripe Dashboard > Webhooks > 対象イベント > "Resend" ボタン
-   （subscriptions upsert は冪等なので何度でも再送可）
+手動再送: Stripe Dashboard > Webhooks > 対象イベント > "Resend"
+（subscriptions の upsert は冪等なので何度でも再送可）
 ```
 
-### 4-3. ログイン（マジックリンク）が届かない
+### 🔴 通知メールが届かない
 
 ```
-1. Resend Dashboard > Logs でメール送信状態を確認（delivered / failed）
-2. スパムフォルダを確認
-3. Cloudflare Dashboard > Workers & Pages > [project] > Logs で POST /api/auth/magic-link の実行を確認
-   → EMAIL_FROM が Resend で認証済みドメインか確認
-   → RESEND_API_KEY が有効か確認
-4. ローカルで EMAIL_PROVIDER=console に切り替えて動作確認
+CF Logs で POST /api/cron/notify の実行を確認
+  → 実行されていない: wrangler.toml の [triggers] crons を確認
+  → 401:              CRON_SECRET（CF シークレット）を確認
+  → 500:              DB 接続 / Resend エラーをログで確認
+
+DB で notification_deliveries を確認
+  → status=failed:    error カラムにエラー詳細あり
+  → レコードなし:     Cron 未実行 or 抽出クエリのバグ
+
+手動実行（冪等設計 = 再実行しても二重送信しない）:
+  curl -X POST https://shimetra.com/api/cron/notify \
+    -H "Authorization: Bearer <CRON_SECRET>"
 ```
 
-### 4-4. 全 API が 500 / DB 接続不能
+### 🔴 全 API が 500 / DB 接続不能
 
 ```
-1. Cloudflare Dashboard > Workers & Pages > [project] > Logs で DATABASE_URL に関するエラーを確認
-2. `wrangler secret list` で DATABASE_URL が登録済みか確認
-3. DB ホスト（Supabase / Neon 等）のダッシュボードで稼働状況を確認
-4. prisma migrate status で未適用マイグレーションがないか確認
+CF Logs でエラー内容を確認
+  → DATABASE_URL 関連: CF シークレットの DATABASE_URL を確認
+  → migration 関連:    npm run db:migrate:deploy を本番 DB に対して実行
+
+Neon Dashboard でDBの稼働状況を確認
 ```
 
----
+## 4. シークレット管理
+
+環境変数の詳細は `docs/ENV.md` を参照。ここでは**機密情報（Secrets）のみ**を扱う。
+
+### シークレット一覧
+
+| 変数                    | 生成方法                    | 設定場所        |
+| ----------------------- | --------------------------- | --------------- |
+| `AUTH_SECRET`           | `openssl rand -base64 32`   | CF シークレット |
+| `CRON_SECRET`           | `openssl rand -base64 32`   | CF シークレット |
+| `DATABASE_URL`          | Neon Dashboard              | CF シークレット |
+| `DATABASE_URL_UNPOOLED` | Neon Dashboard              | CF シークレット |
+| `RESEND_API_KEY`        | Resend Dashboard            | CF シークレット |
+| `STRIPE_SECRET_KEY`     | Stripe Dashboard            | CF シークレット |
+| `STRIPE_WEBHOOK_SECRET` | Stripe Dashboard > Webhooks | CF シークレット |
+
+### シークレットのローテーション手順
+
+```
+1. 新しい値を生成
+2. CF Dashboard → Settings → Variables and Secrets → 値を更新
+3. npm run deploy（新しい値でデプロイ）
+4. .env.local を更新
+
+※ Stripe Webhook の場合: 旧エンドポイントを残したまま新エンドポイントを追加
+   → 動作確認後に旧を削除（ダウンタイムなしで切り替え）
+```
 
 ## 5. ロールバック手順
 
 ### コードのロールバック
-
-1. Git で `git revert <commit>` して push → `npm run deploy`（wrangler）で再デプロイ
-2. または直前コミットを戻す場合:
 
 ```bash
 git revert HEAD --no-edit
@@ -130,27 +116,52 @@ npm run deploy
 
 ### DB マイグレーションのロールバック
 
-> MVP 段階ではカラム削除・スキーマ破壊的変更は行わない方針。
-> 追加のみのマイグレーションはロールバック不要（古いコードでも動く）。
+> 追加のみのマイグレーション（カラム追加など）はロールバック不要。
+> 破壊的変更（カラム削除など）の場合のみ以下を実行。
 
-破壊的変更が必要な場合:
+```bash
+# 1. コードを戻す（上記）
+# 2. 手動 SQL でスキーマを元に戻す
+# 3. Prisma のマイグレーション状態を修正
+DATABASE_URL="..." npx prisma migrate resolve --rolled-back <migration_name>
+```
 
-1. 旧コードに戻す（上記）
-2. Prisma で手動 SQL を実行してカラム/テーブルを元に戻す
-3. `prisma migrate resolve --rolled-back <migration_name>` でマイグレーション状態を修正
+### ロールバック後のスモークテスト
 
-### ロールバック後の確認（スモークテスト）
+```bash
+# 自動スモークテスト
+npm run test:smoke
 
-- [ ] `/login` でマジックリンクが送付される
-- [ ] `/dashboard` が表示される（締切一覧が出る）
-- [ ] `/api/stripe/webhook` が 200 を返す（Stripe からテストイベント送信）
-- [ ] cron 手動実行が 200 を返す
+# 手動確認（必須3点）
+# A. /login でマジックリンクが届く
+# B. /dashboard が表示される
+# C. Cron が 200 を返す
+curl -X POST https://shimetra.com/api/cron/notify \
+  -H "Authorization: Bearer <CRON_SECRET>"
+```
 
----
+## 6. 変更時のチェックリスト
 
-## 6. 変更・更新時のチェックリスト
+### 環境変数を追加・変更したとき
 
-- [ ] 環境変数を追加/変更した → `.env.example` を更新し、`wrangler secret put <VAR>` で本番に反映した
-- [ ] Stripe Webhook イベントを追加した → Stripe Dashboard のエンドポイント設定を更新した
-- [ ] DB スキーマを変更した → `prisma migrate deploy` を本番で実行した
-- [ ] `wrangler.toml` の crons を変更した → `npm run deploy` 後に Cloudflare Dashboard でスケジュールを確認した
+| 変数の種類          | 対応箇所                                                              |
+| ------------------- | --------------------------------------------------------------------- |
+| 機密情報（Secrets） | CF Dashboard → Secrets を更新 → `npm run deploy`                      |
+| 非機密の固定値      | `wrangler.toml [vars]` を更新 → `npm run deploy`                      |
+| `NEXT_PUBLIC_` 系   | `wrangler.toml [vars]` ＋ CF ビルド設定の**両方**を更新 → Retry build |
+
+### DB スキーマを変更したとき
+
+```bash
+# 1. ローカルでマイグレーションファイルを作成
+npm run db:migrate
+
+# 2. 本番 DB に適用
+DATABASE_URL="<本番URL>" npm run db:migrate:deploy
+```
+
+### デプロイ前の最終確認
+
+- [ ] テストが全て通る（`npm run test`）
+- [ ] 本番 DB のマイグレーションが適用済み
+- [ ] 追加した環境変数が CF に設定済み
